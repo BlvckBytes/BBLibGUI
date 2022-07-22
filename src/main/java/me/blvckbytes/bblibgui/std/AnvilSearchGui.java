@@ -10,7 +10,7 @@ import me.blvckbytes.bblibpackets.MCReflect;
 import me.blvckbytes.bblibutil.APlugin;
 import me.blvckbytes.bblibdi.AutoConstruct;
 import me.blvckbytes.bblibdi.AutoInject;
-import me.blvckbytes.bblibutil.Triple;
+import me.blvckbytes.bblibutil.IEnum;
 import me.blvckbytes.bblibutil.Tuple;
 import me.blvckbytes.bblibutil.logger.ILogger;
 import org.bukkit.entity.Player;
@@ -41,7 +41,7 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
   // Shim slot offset to properly distinguish real slots from shim slots
   private static final int SHIM_OFFS = 3, PAGE_BEGIN = SHIM_OFFS + 9;
 
-  private final Map<GuiInstance<?>, Triple<String, Enum<?>[], Integer>> filterState;
+  private final Map<GuiInstance<?>, Tuple<String, IEnum<?>>> filterState;
   private final IFakeItemCommunicator fakeItem;
 
   public AnvilSearchGui(
@@ -103,19 +103,20 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
     inst.fixedItem(
       String.valueOf(Integer.parseInt(slots.getOrDefault("searchFilter", "7")) + SHIM_OFFS),
       () -> {
-        Triple<String, Enum<?>[], Integer> filter = getFilterState(inst);
+        Tuple<String, IEnum<?>> filter = getFilterState(inst);
+
         return itemProvider.getItem(
           StdGuiItem.SEARCH_FILTER,
           ConfigValue.makeEmpty()
-            .withVariable("filters", Arrays.stream(filter.getB()).map(Enum::name).collect(Collectors.joining(",")))
-            .withVariable("active_filter_index", filter.getC())
+            .withVariable("filters", Arrays.stream(filter.getB().listValues()).map(IEnum::name).collect(Collectors.joining(",")))
+            .withVariable("active_filter_index", filter.getB().ordinal())
             .exportVariables()
         );
       },
       e -> {
         // Cycle to the next available filter field
-        Triple<String, Enum<?>[], Integer> filter = getFilterState(inst);
-        filter.setC((filter.getC() + 1) % filter.getB().length);
+        Tuple<String, IEnum<?>> filter = getFilterState(inst);
+        filter.setB(filter.getB().nextValue());
 
         // Redraw the item
         inst.redraw(String.valueOf(Integer.parseInt(slots.getOrDefault("searchFilter", "7")) + SHIM_OFFS));
@@ -261,14 +262,14 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
    */
   private List<Tuple<Object, ItemStack>> filterRepresentitives(GuiInstance<SingleChoiceParam> inst, String search) {
     FilterFunction customFilter = inst.getArg().getCustomFilter();
-    Triple<String, Enum<?>[], Integer> filter = getFilterState(inst);
+    Tuple<String, IEnum<?>> filter = getFilterState(inst);
 
     // Update search buffer
     filter.setA(search);
 
     // Apply the custom filter
     if (customFilter != null)
-      return customFilter.apply(search, filter.getB()[filter.getC()], inst.getArg().getRepresentitives());
+      return customFilter.apply(search, filter.getB(), inst.getArg().getRepresentitives());
 
     // Filter by searching through the displayname (fallback)
     return inst.getArg().getRepresentitives().stream()
@@ -285,9 +286,9 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
    * @param inst GUI instance
    * @return Filter state
    */
-  private Triple<String, Enum<?>[], Integer> getFilterState(GuiInstance<SingleChoiceParam> inst) {
+  private Tuple<String, IEnum<?>> getFilterState(GuiInstance<SingleChoiceParam> inst) {
     if (!filterState.containsKey(inst))
-      filterState.put(inst, new Triple<>("", inst.getArg().getSearchFields().getEnumConstants(), 0));
+      filterState.put(inst, new Tuple<>("", inst.getArg().getSearchFields()));
     return filterState.get(inst);
   }
 }

@@ -6,6 +6,7 @@ import me.blvckbytes.bblibgui.param.MultipleChoiceParam;
 import me.blvckbytes.bblibgui.param.SingleChoiceParam;
 import me.blvckbytes.bblibgui.param.YesNoParam;
 import me.blvckbytes.bblibgui.std.*;
+import me.blvckbytes.bblibutil.IEnum;
 import me.blvckbytes.bblibutil.TriResult;
 import me.blvckbytes.bblibutil.Tuple;
 import me.blvckbytes.bblibutil.UnsafeFunction;
@@ -146,7 +147,7 @@ public class UserInputChain {
     MultipleChoiceGui multipleChoiceGui,
     String field,
     @Nullable Function<ItemStack, ItemStack> selectionTransform,
-    Class<? extends Enum<?>> searchFields,
+    IEnum<?> searchFields,
     ConfigValue type,
     IStdGuiItemProvider stdProvider,
     @Nullable GuiLayoutSection layout,
@@ -193,7 +194,7 @@ public class UserInputChain {
     SingleChoiceGui singleChoiceGui,
     String field,
     @Nullable Function<ItemStack, ItemStack> selectionTransform,
-    Class<? extends Enum<?>> searchFields,
+    IEnum<?> searchFields,
     ConfigValue type,
     IStdGuiItemProvider stdProvider,
     @Nullable GuiLayoutSection layout,

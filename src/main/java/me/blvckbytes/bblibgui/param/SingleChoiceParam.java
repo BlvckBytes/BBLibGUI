@@ -3,6 +3,7 @@ package me.blvckbytes.bblibgui.param;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import me.blvckbytes.bblibgui.*;
+import me.blvckbytes.bblibutil.IEnum;
 import me.blvckbytes.bblibutil.Tuple;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ public class SingleChoiceParam implements IAnvilGuiParam<SingleChoiceParam> {
   private @Nullable Function<ItemStack, ItemStack> selectionTransform;
 
   // Available fields for filtering
-  private Class<? extends Enum<?>> searchFields;
+  private IEnum<?> searchFields;
 
   // Custom external filtering function
   private @Nullable FilterFunction customFilter;

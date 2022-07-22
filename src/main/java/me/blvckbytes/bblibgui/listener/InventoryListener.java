@@ -52,10 +52,19 @@ public class InventoryListener implements Listener {
       return;
 
     Player p = (Player) e.getWhoClicked();
+    Inventory clickedInventory = (
+      // Check whether the raw slot is bigger than the inventory clicked, which
+      // will always be the top inventory when having two inventories open. If so,
+      // take the players inventory as the clicked inventory.
+      e.getRawSlot() >= e.getInventory().getSize() ?
+      p.getInventory() : e.getInventory()
+    );
 
     // Clicked into void
-    if (e.getClickedInventory() == null)
+    if (clickedInventory == null)
       return;
+
+    int clickedSlot = e.getSlot();
 
     // Swapped slot contents using hotbar keys
     if (
@@ -64,31 +73,31 @@ public class InventoryListener implements Listener {
     ) {
 
       ItemStack hotbar = e.getHotbarButton() >= 0 ? p.getInventory().getItem(e.getHotbarButton()) : null;
-      ItemStack target = e.getClickedInventory().getItem(e.getSlot());
+      ItemStack target = clickedInventory.getItem(clickedSlot);
 
       // Swapped two items
       if (hotbar != null && target != null) {
         // Moved around only in their own inventory
-        if (p.getInventory().equals(e.getClickedInventory())) {
-          if (checkCancellation(p.getInventory(), p.getInventory(), p, ManipulationAction.SWAP, e.getHotbarButton(), e.getSlot(), e.getClick()))
+        if (p.getInventory().equals(clickedInventory)) {
+          if (checkCancellation(p.getInventory(), p.getInventory(), p, ManipulationAction.SWAP, e.getHotbarButton(), clickedSlot, e.getClick()))
             e.setCancelled(true);
         }
 
         else {
-          if (checkCancellation(p.getInventory(), e.getClickedInventory(), p, ManipulationAction.SWAP, e.getHotbarButton(), e.getSlot(), e.getClick()))
+          if (checkCancellation(p.getInventory(), clickedInventory, p, ManipulationAction.SWAP, e.getHotbarButton(), clickedSlot, e.getClick()))
             e.setCancelled(true);
         }
       }
 
       // Moved into hotbar
       else if (hotbar == null && target != null) {
-        if (checkCancellation(e.getClickedInventory(), p.getInventory(), p, ManipulationAction.MOVE, e.getSlot(), e.getHotbarButton(), e.getClick()))
+        if (checkCancellation(clickedInventory, p.getInventory(), p, ManipulationAction.MOVE, clickedSlot, e.getHotbarButton(), e.getClick()))
           e.setCancelled(true);
       }
 
       // Moved into foreign
       else if (hotbar != null) {
-        if (checkCancellation(p.getInventory(), e.getClickedInventory(), p, ManipulationAction.MOVE, e.getHotbarButton(), e.getSlot(), e.getClick()))
+        if (checkCancellation(p.getInventory(), clickedInventory, p, ManipulationAction.MOVE, e.getHotbarButton(), clickedSlot, e.getClick()))
           e.setCancelled(true);
       }
 
@@ -104,7 +113,7 @@ public class InventoryListener implements Listener {
       Inventory to;
 
       // Move up into foreign inventory
-      if (!top.equals(e.getClickedInventory())) {
+      if (!top.equals(clickedInventory)) {
         from = p.getInventory();
         to = top;
       }
@@ -115,7 +124,7 @@ public class InventoryListener implements Listener {
         to = p.getInventory();
       }
 
-      ItemStack item = from.getItem(e.getSlot());
+      ItemStack item = from.getItem(clickedSlot);
       if (item == null)
         return;
 
@@ -125,7 +134,7 @@ public class InventoryListener implements Listener {
       if (targetSlots.size() == 0)
         return;
 
-      if (targetSlots.stream().anyMatch(slot -> checkCancellation(from, to, p, ManipulationAction.MOVE, e.getSlot(), slot, e.getClick())))
+      if (targetSlots.stream().anyMatch(slot -> checkCancellation(from, to, p, ManipulationAction.MOVE, clickedSlot, slot, e.getClick())))
         e.setCancelled(true);
 
       return;
@@ -139,18 +148,17 @@ public class InventoryListener implements Listener {
       e.getAction() == InventoryAction.PICKUP_SOME ||
       e.getAction() == InventoryAction.COLLECT_TO_CURSOR
     ) {
-      Inventory inv = e.getClickedInventory();
       Inventory top = e.getView().getTopInventory();
 
       Set<Integer> slotsOwn = new HashSet<>(), slotsTop = new HashSet<>();
 
       // Clicked within the top inventory, add that slot
-      if (inv.equals(top))
-        slotsTop.add(e.getSlot());
+      if (clickedInventory.equals(top))
+        slotsTop.add(clickedSlot);
 
       // Must be the own inventory
       else
-        slotsOwn.add(e.getSlot());
+        slotsOwn.add(clickedSlot);
 
       // Collected all similar items to the cursor
       boolean isCollect = e.getAction() == InventoryAction.COLLECT_TO_CURSOR;
@@ -206,14 +214,14 @@ public class InventoryListener implements Listener {
         e.getAction() == InventoryAction.PLACE_ONE ||
         e.getAction() == InventoryAction.PLACE_SOME
     ) {
-      if (checkCancellation(e.getClickedInventory(), p, ManipulationAction.PLACE, e.getSlot(), e.getClick()))
+      if (checkCancellation(clickedInventory, p, ManipulationAction.PLACE, clickedSlot, e.getClick()))
         e.setCancelled(true);
       return;
     }
 
     // Swapped a slot with the cursor contents
     if (e.getAction() == InventoryAction.SWAP_WITH_CURSOR) {
-      if (checkCancellation(e.getClickedInventory(), p, ManipulationAction.SWAP, e.getSlot(), e.getClick()))
+      if (checkCancellation(clickedInventory, p, ManipulationAction.SWAP, clickedSlot, e.getClick()))
         e.setCancelled(true);
       return;
     }
@@ -223,12 +231,12 @@ public class InventoryListener implements Listener {
       e.getAction() == InventoryAction.DROP_ONE_SLOT ||
       e.getAction() == InventoryAction.DROP_ALL_SLOT
     ) {
-      if (checkCancellation(e.getClickedInventory(), p, ManipulationAction.DROP, e.getSlot(), e.getClick()))
+      if (checkCancellation(clickedInventory, p, ManipulationAction.DROP, clickedSlot, e.getClick()))
         e.setCancelled(true);
       return;
     }
 
-    if (checkCancellation(e.getClickedInventory(), p, ManipulationAction.CLICK, e.getSlot(), e.getClick()))
+    if (checkCancellation(clickedInventory, p, ManipulationAction.CLICK, clickedSlot, e.getClick()))
       e.setCancelled(true);
   }
 

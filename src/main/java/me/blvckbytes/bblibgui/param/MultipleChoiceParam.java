@@ -6,6 +6,7 @@ import me.blvckbytes.bblibgui.FilterFunction;
 import me.blvckbytes.bblibgui.GuiInstance;
 import me.blvckbytes.bblibgui.GuiLayoutSection;
 import me.blvckbytes.bblibgui.IStdGuiItemProvider;
+import me.blvckbytes.bblibutil.IEnum;
 import me.blvckbytes.bblibutil.Tuple;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,7 @@ public class MultipleChoiceParam {
   private @Nullable Function<ItemStack, ItemStack> selectionTransform;
 
   // Available fields for filtering
-  private Class<? extends Enum<?>> searchFields;
+  private IEnum<?> searchFields;
 
   // Custom external filtering function
   private FilterFunction customFilter;
