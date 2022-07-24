@@ -2,10 +2,7 @@ package me.blvckbytes.bblibgui.param;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import me.blvckbytes.bblibgui.FilterFunction;
-import me.blvckbytes.bblibgui.GuiInstance;
-import me.blvckbytes.bblibgui.GuiLayoutSection;
-import me.blvckbytes.bblibgui.IStdGuiItemProvider;
+import me.blvckbytes.bblibgui.*;
 import me.blvckbytes.bblibutil.IEnum;
 import me.blvckbytes.bblibutil.Tuple;
 import org.bukkit.inventory.ItemStack;
@@ -46,10 +43,10 @@ public abstract class AChoiceParam<T> implements IAnvilGuiParam<T> {
   ////////////////////////// Searching //////////////////////////
 
   // Available fields for filtering
-  private final IEnum<?> searchFields;
+  private final IFilterEnum<?> searchFields;
 
   // External filtering function
-  private final FilterFunction filter;
+  private @Nullable final FilterFunction filter;
 
   ////////////////////////// Callbacks //////////////////////////
 

@@ -1,12 +1,7 @@
 package me.blvckbytes.bblibgui.param;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import me.blvckbytes.bblibgui.FilterFunction;
-import me.blvckbytes.bblibgui.GuiInstance;
-import me.blvckbytes.bblibgui.GuiLayoutSection;
-import me.blvckbytes.bblibgui.IStdGuiItemProvider;
-import me.blvckbytes.bblibutil.IEnum;
+import me.blvckbytes.bblibgui.*;
 import me.blvckbytes.bblibutil.Tuple;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -34,8 +29,8 @@ public class SingleChoiceParam extends AChoiceParam<SingleChoiceParam> {
     IStdGuiItemProvider itemProvider,
     @Nullable Function<ItemStack, ItemStack> selectionTransform,
     @Nullable GuiLayoutSection searchLayout,
-    IEnum<?> searchFields,
-    FilterFunction filter,
+    IFilterEnum<?> searchFields,
+    @Nullable FilterFunction filter,
     BiConsumer<Object, GuiInstance<SingleChoiceParam>> selected,
     @Nullable Consumer<GuiInstance<SingleChoiceParam>> closed,
     @Nullable Consumer<GuiInstance<SingleChoiceParam>> backButton,

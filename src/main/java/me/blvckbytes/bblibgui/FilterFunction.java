@@ -1,6 +1,5 @@
 package me.blvckbytes.bblibgui;
 
-import me.blvckbytes.bblibutil.IEnum;
 import me.blvckbytes.bblibutil.Tuple;
 import org.bukkit.inventory.ItemStack;
 
@@ -22,6 +21,6 @@ public interface FilterFunction {
    * @param items List of items to filter
    * @return Filtered items
    */
-  List<Tuple<Object, ItemStack>> apply(String search, IEnum<?> filter, List<Tuple<Object, ItemStack>> items);
+  List<Tuple<Object, ItemStack>> apply(String search, IFilterEnum<?> filter, List<Tuple<Object, ItemStack>> items);
 
 }

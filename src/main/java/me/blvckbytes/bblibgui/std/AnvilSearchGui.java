@@ -18,10 +18,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Field;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /*
@@ -40,7 +38,7 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
   // Time in milliseconds between update invocations when typing
   private static final long TYPE_DEBOUNCE_MS = 300;
 
-  private final Map<GuiInstance<?>, Tuple<String, IEnum<?>>> filterState;
+  private final Map<GuiInstance<?>, Tuple<String, IFilterEnum<?>>> filterState;
   private final Map<GuiInstance<?>, Tuple<Long, Runnable>> typingActions;
   private final IFakeItemCommunicator fakeItem;
 
@@ -121,7 +119,7 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
     inst.fixedItem(
       String.valueOf(Integer.parseInt(slots.getOrDefault("searchFilter", "7")) + SHIM_OFFS),
       () -> {
-        Tuple<String, IEnum<?>> filter = getFilterState(inst);
+        Tuple<String, IFilterEnum<?>> filter = getFilterState(inst);
 
         return itemProvider.getItem(
           StdGuiItem.SEARCH_FILTER,
@@ -133,7 +131,7 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
       },
       e -> {
         // Cycle to the next available filter field
-        Tuple<String, IEnum<?>> filter = getFilterState(inst);
+        Tuple<String, IFilterEnum<?>> filter = getFilterState(inst);
         filter.setB(filter.getB().nextValue());
 
         // Redraw the item
@@ -235,6 +233,58 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
   //=========================================================================//
 
   /**
+   * Calculates a number which represents the difference between all available words
+   * within the list of texts and the search words, where every text word may only match once.
+   * @param words Words to match
+   * @param texts Texts to search in
+   * @return Difference, < 0 if there was no match for all words
+   */
+  private int calculateDifference(String[] words, String... texts) {
+    // Create a list of unique words which all of the texts contain
+    Set<String> availWords = new HashSet<>();
+    for (String text : texts) {
+      for (String textWord : text.split(" "))
+        availWords.add(textWord.toLowerCase());
+    }
+
+    // Iterate all words and count sum the total diff
+    int totalDiff = 0;
+    for (String word : words) {
+
+      // Find the best match for the current word in all remaining words
+      String bestMatch = null;
+      int bestMatchDiff = Integer.MAX_VALUE;
+      for (String availWord : availWords) {
+
+        // Not cotaining the target word
+        int index = availWord.indexOf(word.toLowerCase());
+        if (index < 0)
+          continue;
+
+        // The difference is determined by how many other chars are padding the search word
+        int diff = availWord.length() - word.length();
+
+        // Compare and update the local best match
+        if (diff < bestMatchDiff) {
+          bestMatchDiff = diff;
+          bestMatch = availWord;
+        }
+      }
+
+      // No match found for the current word, all words need to match, thus cancel
+      if (bestMatch == null)
+        return -1;
+
+      // Remove the matching word from the list and add it's difference to the total
+      availWords.remove(bestMatch);
+      totalDiff += bestMatchDiff;
+    }
+
+    return totalDiff;
+  }
+
+
+  /**
    * Redraws the whole screen, including shim slots
    */
   private void redraw(GuiInstance<?> inst) {
@@ -293,13 +343,62 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
    */
   private List<Tuple<Object, ItemStack>> filterRepresentitives(GuiInstance<SingleChoiceParam> inst, String search) {
     FilterFunction externalFilter = inst.getArg().getFilter();
-    Tuple<String, IEnum<?>> filterState = getFilterState(inst);
+    Tuple<String, IFilterEnum<?>> filterState = getFilterState(inst);
 
     // Update search buffer
     filterState.setA(search);
 
-    // Apply the external filter
-    return externalFilter.apply(search, filterState.getB(), inst.getArg().getRepresentitives());
+    // Apply the external filter, if provided
+    if (externalFilter != null)
+      return externalFilter.apply(search, filterState.getB(), inst.getArg().getRepresentitives());
+
+    // Filter based on the search enum's target fields
+
+    String[] searchWords = search.toLowerCase().split(" ");
+    Field[] valueFields = filterState.getB().getFields();
+
+    // Ensure that all fields are accessible
+    for (Field valueField : valueFields)
+      valueField.setAccessible(true);
+
+    // Field value buffer, used to avoid useless reallocation
+    String[] valueBuffer = new String[valueFields.length];
+
+    // Extend each of the results by it's diff metric
+    List<Tuple<Tuple<Object, ItemStack>, Integer>> results = new ArrayList<>();
+
+    for (Tuple<Object, ItemStack> item : inst.getArg().getRepresentitives()) {
+      // Resolve all search fields for the current object
+      resolveFields(valueFields, valueBuffer, item.getA());
+
+      // Skip items which don't match at all
+      int diff = calculateDifference(searchWords, valueBuffer);
+      if (diff >= 0)
+        results.add(new Tuple<>(item, diff));
+    }
+
+    // Sort by diff ascending to have the most relevant results come first
+    // and unpack from the previously attached metric again
+    return results.stream()
+      .sorted(Comparator.comparingInt(Tuple::getB))
+      .map(Tuple::getA)
+      .collect(Collectors.toList());
+  }
+
+  /**
+   * Resolve an array of fields for a given object
+   * @param fields Target fields
+   * @param outBuf Value output buffer
+   * @param o Target object to resolve on
+   */
+  private void resolveFields(Field[] fields, String[] outBuf, Object o) {
+    for (int i = 0; i < fields.length; i++) {
+      try {
+        outBuf[i] = fields[i].get(o).toString();
+      } catch (Exception ignored) {
+        outBuf[i] = "";
+      }
+    }
   }
 
   /**
@@ -307,7 +406,7 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
    * @param inst GUI instance
    * @return Filter state
    */
-  private Tuple<String, IEnum<?>> getFilterState(GuiInstance<SingleChoiceParam> inst) {
+  private Tuple<String, IFilterEnum<?>> getFilterState(GuiInstance<SingleChoiceParam> inst) {
     if (!filterState.containsKey(inst))
       filterState.put(inst, new Tuple<>("", inst.getArg().getSearchFields()));
     return filterState.get(inst);

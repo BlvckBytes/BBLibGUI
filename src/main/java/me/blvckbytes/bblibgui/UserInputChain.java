@@ -155,8 +155,8 @@ public class UserInputChain {
     IStdGuiItemProvider itemProvider,
     @Nullable Function<ItemStack, ItemStack> selectionTransform,
     @Nullable GuiLayoutSection searchLayout,
-    IEnum<?> searchFields,
-    FilterFunction filter,
+    IFilterEnum<?> searchFields,
+    @Nullable FilterFunction filter,
     @Nullable GuiLayoutSection singleChoiceLayout,
     @Nullable GuiLayoutSection multipleChoiceLayout,
     @Nullable Function<Map<String, Object>, Boolean> skip
@@ -209,8 +209,8 @@ public class UserInputChain {
     IStdGuiItemProvider itemProvider,
     @Nullable Function<ItemStack, ItemStack> selectionTransform,
     @Nullable GuiLayoutSection searchLayout,
-    IEnum<?> searchFields,
-    FilterFunction filter,
+    IFilterEnum<?> searchFields,
+    @Nullable FilterFunction filter,
     @Nullable GuiLayoutSection singleChoiceLayout,
     @Nullable Function<Map<String, Object>, Boolean> skip
   ) {
