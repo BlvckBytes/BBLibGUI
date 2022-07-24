@@ -17,7 +17,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,13 +34,14 @@ import java.util.stream.Collectors;
 @AutoConstruct
 public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements Listener {
 
-  // TODO: Debounce typing a bit, as searching is quite expensive
-  // TODO: Think about improving search efficiency
-
   // Shim slot offset to properly distinguish real slots from shim slots
   private static final int SHIM_OFFS = 3, PAGE_BEGIN = SHIM_OFFS + 9;
 
+  // Time in milliseconds between update invocations when typing
+  private static final long TYPE_DEBOUNCE_MS = 300;
+
   private final Map<GuiInstance<?>, Tuple<String, IEnum<?>>> filterState;
+  private final Map<GuiInstance<?>, Tuple<Long, Runnable>> typingActions;
   private final IFakeItemCommunicator fakeItem;
 
   public AnvilSearchGui(
@@ -53,12 +53,15 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
   ) {
     super(plugin, packetInterceptor, refl, logger, fakeItem);
     this.fakeItem = fakeItem;
+
     this.filterState = new HashMap<>();
+    this.typingActions = new HashMap<>();
   }
 
   @Override
   protected void terminated(GuiInstance<SingleChoiceParam> inst) {
     filterState.remove(inst);
+    typingActions.remove(inst);
   }
 
   @Override
@@ -76,6 +79,21 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
   protected boolean opening(GuiInstance<SingleChoiceParam> inst) {
     IStdGuiItemProvider itemProvider = inst.getArg().getItemProvider();
     GuiLayoutSection layout = inst.getArg().getSearchLayout();
+
+    ////////////////////////// Type Debouncing //////////////////////////
+
+    // Check typing actions on every tick
+    inst.setTickReceiver(time -> {
+      Tuple<Long, Runnable> lastAction = typingActions.get(inst);
+
+      // Either currently no action available or the debounce period has not yet elapsed
+      if (lastAction == null || System.currentTimeMillis() - lastAction.getA() < TYPE_DEBOUNCE_MS)
+        return;
+
+      // Process the action
+      typingActions.remove(inst);
+      lastAction.getB().run();
+    });
 
     ////////////////////////// Inventory Items //////////////////////////
 
@@ -230,28 +248,41 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
    */
   @Override
   protected void onTyping(GuiInstance<SingleChoiceParam> inst, String text) {
-    // Filter the representitives by the search string
-    List<Tuple<Object, ItemStack>> results = filterRepresentitives(inst, text);
-    Player p = inst.getViewer();
+    // Register the latest typing action with the current time-stamp
+    typingActions.put(inst, new Tuple<>(
+      System.currentTimeMillis(),
 
-    // Set page contents
-    inst.setPageContents(() -> (
-      results.stream()
-        .map(t -> (
-          new GuiItem(
-            i -> t.getB(),
-            e -> {
-              // Call the selection callback
-              madeSelection.add(p);
-              inst.getArg().getSelected().accept(t.getA(), inst);
-            },
-            null
-          )
-        ))
-        .collect(Collectors.toList())
+      // Function that encloses all current parameters and
+      // will apply them to the page contents on execution
+      () -> {
+        // Skip filtration if the text hasn't changed
+        if (!text.isEmpty() && getFilterState(inst).getA().equals(text))
+          return;
+
+        // Filter the representitives by the search string
+        List<Tuple<Object, ItemStack>> results = filterRepresentitives(inst, text);
+        Player p = inst.getViewer();
+
+        // Set page contents
+        inst.setPageContents(() -> (
+          results.stream()
+            .map(t -> (
+              new GuiItem(
+                i -> t.getB(),
+                e -> {
+                  // Call the selection callback
+                  madeSelection.add(p);
+                  inst.getArg().getSelected().accept(t.getA(), inst);
+                },
+                null
+              )
+            ))
+            .collect(Collectors.toList())
+        ));
+
+        inst.refreshPageContents(true);
+      }
     ));
-
-    inst.refreshPageContents(true);
   }
 
   /**
@@ -261,24 +292,14 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
    * @return Filtered list to display
    */
   private List<Tuple<Object, ItemStack>> filterRepresentitives(GuiInstance<SingleChoiceParam> inst, String search) {
-    FilterFunction customFilter = inst.getArg().getFilter();
-    Tuple<String, IEnum<?>> filter = getFilterState(inst);
+    FilterFunction externalFilter = inst.getArg().getFilter();
+    Tuple<String, IEnum<?>> filterState = getFilterState(inst);
 
     // Update search buffer
-    filter.setA(search);
+    filterState.setA(search);
 
-    // Apply the custom filter
-    if (customFilter != null)
-      return customFilter.apply(search, filter.getB(), inst.getArg().getRepresentitives());
-
-    // Filter by searching through the displayname (fallback)
-    return inst.getArg().getRepresentitives().stream()
-      .filter(t -> {
-        ItemMeta meta = t.getB().getItemMeta();
-        String name = meta == null ? t.getB().getType().toString() : meta.getDisplayName();
-        return name.toLowerCase().contains(search.trim().toLowerCase());
-      })
-      .collect(Collectors.toList());
+    // Apply the external filter
+    return externalFilter.apply(search, filterState.getB(), inst.getArg().getRepresentitives());
   }
 
   /**

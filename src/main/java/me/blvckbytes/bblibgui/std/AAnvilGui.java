@@ -107,7 +107,7 @@ public abstract class AAnvilGui<T extends IAnvilGuiParam<T>> extends AGui<T> imp
 
     try {
       // Synchronize from async packet thread
-      String text = refl.getFieldByType(incoming, String.class, 0);
+      String text = refl.getFieldByType(incoming, String.class, 0).trim();
       plugin.runTask(() -> onTyping(inst, text));
     } catch (Exception e) {
       logger.logError(e);
