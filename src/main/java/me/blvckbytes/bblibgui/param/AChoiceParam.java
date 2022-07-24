@@ -43,10 +43,10 @@ public abstract class AChoiceParam<T> implements IAnvilGuiParam<T> {
   ////////////////////////// Searching //////////////////////////
 
   // Available fields for filtering
-  private final IFilterEnum<?> searchFields;
+  private final @Nullable IFilterEnum<?> searchFields;
 
   // External filtering function
-  private @Nullable final FilterFunction filter;
+  private final @Nullable FilterFunction filter;
 
   ////////////////////////// Callbacks //////////////////////////
 

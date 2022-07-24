@@ -6,7 +6,6 @@ import me.blvckbytes.bblibgui.param.MultipleChoiceParam;
 import me.blvckbytes.bblibgui.param.SingleChoiceParam;
 import me.blvckbytes.bblibgui.param.YesNoParam;
 import me.blvckbytes.bblibgui.std.*;
-import me.blvckbytes.bblibutil.IEnum;
 import me.blvckbytes.bblibutil.TriResult;
 import me.blvckbytes.bblibutil.Tuple;
 import me.blvckbytes.bblibutil.UnsafeFunction;
@@ -155,7 +154,7 @@ public class UserInputChain {
     IStdGuiItemProvider itemProvider,
     @Nullable Function<ItemStack, ItemStack> selectionTransform,
     @Nullable GuiLayoutSection searchLayout,
-    IFilterEnum<?> searchFields,
+    @Nullable IFilterEnum<?> searchFields,
     @Nullable FilterFunction filter,
     @Nullable GuiLayoutSection singleChoiceLayout,
     @Nullable GuiLayoutSection multipleChoiceLayout,
@@ -209,7 +208,7 @@ public class UserInputChain {
     IStdGuiItemProvider itemProvider,
     @Nullable Function<ItemStack, ItemStack> selectionTransform,
     @Nullable GuiLayoutSection searchLayout,
-    IFilterEnum<?> searchFields,
+    @Nullable IFilterEnum<?> searchFields,
     @Nullable FilterFunction filter,
     @Nullable GuiLayoutSection singleChoiceLayout,
     @Nullable Function<Map<String, Object>, Boolean> skip

@@ -29,7 +29,7 @@ public class SingleChoiceParam extends AChoiceParam<SingleChoiceParam> {
     IStdGuiItemProvider itemProvider,
     @Nullable Function<ItemStack, ItemStack> selectionTransform,
     @Nullable GuiLayoutSection searchLayout,
-    IFilterEnum<?> searchFields,
+    @Nullable IFilterEnum<?> searchFields,
     @Nullable FilterFunction filter,
     BiConsumer<Object, GuiInstance<SingleChoiceParam>> selected,
     @Nullable Consumer<GuiInstance<SingleChoiceParam>> closed,

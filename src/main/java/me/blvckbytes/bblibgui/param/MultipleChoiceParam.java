@@ -29,7 +29,7 @@ public class MultipleChoiceParam extends AChoiceParam<MultipleChoiceParam> {
     IStdGuiItemProvider itemProvider,
     @Nullable Function<ItemStack, ItemStack> selectionTransform,
     @Nullable GuiLayoutSection searchLayout,
-    IFilterEnum<?> searchFields,
+    @Nullable IFilterEnum<?> searchFields,
     @Nullable FilterFunction filter,
     BiConsumer<Object, GuiInstance<MultipleChoiceParam>> selected,
     @Nullable Consumer<GuiInstance<MultipleChoiceParam>> closed,

@@ -17,6 +17,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -38,7 +40,7 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
   // Time in milliseconds between update invocations when typing
   private static final long TYPE_DEBOUNCE_MS = 300;
 
-  private final Map<GuiInstance<?>, Tuple<String, IFilterEnum<?>>> filterState;
+  private final Map<GuiInstance<?>, Tuple<String, @Nullable IFilterEnum<?>>> filterState;
   private final Map<GuiInstance<?>, Tuple<Long, Runnable>> typingActions;
   private final IFakeItemCommunicator fakeItem;
 
@@ -115,33 +117,36 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
       itemProvider
     );
 
-    // Filter mode in hotbar
-    inst.fixedItem(
-      String.valueOf(Integer.parseInt(slots.getOrDefault("searchFilter", "7")) + SHIM_OFFS),
-      () -> {
-        Tuple<String, IFilterEnum<?>> filter = getFilterState(inst);
+    // Filter mode in hotbar, only render if an enum has been provided
+    if (getFilterState(inst).getB() != null) {
+      inst.fixedItem(
+        String.valueOf(Integer.parseInt(slots.getOrDefault("searchFilter", "7")) + SHIM_OFFS),
+        () -> {
+          Tuple<String, @Nullable IFilterEnum<?>> filter = getFilterState(inst);
 
-        return itemProvider.getItem(
-          StdGuiItem.SEARCH_FILTER,
-          ConfigValue.makeEmpty()
-            .withVariable("filters", Arrays.stream(filter.getB().listValues()).map(IEnum::name).collect(Collectors.joining(",")))
-            .withVariable("active_filter_index", filter.getB().ordinal())
-            .exportVariables()
-        );
-      },
-      e -> {
-        // Cycle to the next available filter field
-        Tuple<String, IFilterEnum<?>> filter = getFilterState(inst);
-        filter.setB(filter.getB().nextValue());
+          return itemProvider.getItem(
+            StdGuiItem.SEARCH_FILTER,
+            ConfigValue.makeEmpty()
+              .withVariable("filters", Arrays.stream(filter.getB().listValues()).map(IEnum::name).collect(Collectors.joining(",")))
+              .withVariable("active_filter_index", filter.getB().ordinal())
+              .exportVariables()
+          );
+        },
+        e -> {
+          // Cycle to the next available filter field
+          Tuple<String, @Nullable IFilterEnum<?>> filter = getFilterState(inst);
 
-        // Redraw the item
-        inst.redraw(String.valueOf(Integer.parseInt(slots.getOrDefault("searchFilter", "7")) + SHIM_OFFS));
+          filter.setB(filter.getB().nextValue());
 
-        // Force results update
-        onTyping(inst, filter.getA());
-      },
-      null
-    );
+          // Redraw the item
+          inst.redraw(String.valueOf(Integer.parseInt(slots.getOrDefault("searchFilter", "7")) + SHIM_OFFS));
+
+          // Force results update
+          onTyping(inst, filter.getA());
+        },
+        null
+      );
+    }
 
     // Set all slots above the offset to the player's inventory
     inst.setSlotShim((slot, item) -> {
@@ -305,10 +310,6 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
       // Function that encloses all current parameters and
       // will apply them to the page contents on execution
       () -> {
-        // Skip filtration if the text hasn't changed
-        if (!text.isEmpty() && getFilterState(inst).getA().equals(text))
-          return;
-
         // Filter the representitives by the search string
         List<Tuple<Object, ItemStack>> results = filterRepresentitives(inst, text);
         Player p = inst.getViewer();
@@ -343,7 +344,7 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
    */
   private List<Tuple<Object, ItemStack>> filterRepresentitives(GuiInstance<SingleChoiceParam> inst, String search) {
     FilterFunction externalFilter = inst.getArg().getFilter();
-    Tuple<String, IFilterEnum<?>> filterState = getFilterState(inst);
+    Tuple<String, @Nullable IFilterEnum<?>> filterState = getFilterState(inst);
 
     // Update search buffer
     filterState.setA(search);
@@ -352,24 +353,38 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
     if (externalFilter != null)
       return externalFilter.apply(search, filterState.getB(), inst.getArg().getRepresentitives());
 
-    // Filter based on the search enum's target fields
-
+    // Create a value buffer of either size two (displayname, lore) or the number of available fields
+    IFilterEnum<?> fields = filterState.getB();
+    String[] valueBuffer = new String[fields == null ? 2 : fields.getFields().length];
     String[] searchWords = search.toLowerCase().split(" ");
-    Field[] valueFields = filterState.getB().getFields();
 
-    // Ensure that all fields are accessible
-    for (Field valueField : valueFields)
-      valueField.setAccessible(true);
+    // Set value fields accessible, if available
+    Field[] valueFields = null;
+    if (fields != null) {
+      valueFields = fields.getFields();
 
-    // Field value buffer, used to avoid useless reallocation
-    String[] valueBuffer = new String[valueFields.length];
+      // Ensure that all fields are accessible
+      for (Field valueField : valueFields)
+        valueField.setAccessible(true);
+    }
 
     // Extend each of the results by it's diff metric
     List<Tuple<Tuple<Object, ItemStack>, Integer>> results = new ArrayList<>();
 
     for (Tuple<Object, ItemStack> item : inst.getArg().getRepresentitives()) {
-      // Resolve all search fields for the current object
-      resolveFields(valueFields, valueBuffer, item.getA());
+
+      // Value fields provided, use them
+      if (valueFields != null) {
+        // Resolve all search fields for the current object
+        resolveFields(valueFields, valueBuffer, item.getA());
+      }
+
+      // No fields available, use displayname and lore of the item as a fallback
+      else {
+        ItemMeta meta = item.getB().getItemMeta();
+        valueBuffer[0] = meta == null ? "" : meta.getDisplayName();
+        valueBuffer[1] = meta == null ? "" : String.join(" ", meta.getLore());
+      }
 
       // Skip items which don't match at all
       int diff = calculateDifference(searchWords, valueBuffer);
@@ -406,7 +421,7 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
    * @param inst GUI instance
    * @return Filter state
    */
-  private Tuple<String, IFilterEnum<?>> getFilterState(GuiInstance<SingleChoiceParam> inst) {
+  private Tuple<String, @Nullable IFilterEnum<?>> getFilterState(GuiInstance<SingleChoiceParam> inst) {
     if (!filterState.containsKey(inst))
       filterState.put(inst, new Tuple<>("", inst.getArg().getSearchFields()));
     return filterState.get(inst);
