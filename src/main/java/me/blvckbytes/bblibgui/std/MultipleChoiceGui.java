@@ -69,7 +69,7 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
   protected boolean opening(GuiInstance<MultipleChoiceParam> inst) {
     MultipleChoiceParam arg = inst.getArg();
     IStdGuiItemProvider itemProvider = arg.getItemProvider();
-    GuiLayoutSection layout = arg.getLayout();
+    GuiLayoutSection layout = arg.getMultipleChoiceLayout();
 
     inst.applyLayoutParameters(layout);
 
@@ -118,8 +118,8 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
             .filter(repr -> !choices.contains(repr))
             .collect(Collectors.toList()),
 
-          itemProvider, arg.getChoiceLayout(), arg.getSearchLayout(),
-          null, arg.getSearchFields(), arg.getCustomFilter(),
+          itemProvider, arg.getSelectionTransform(), arg.getSearchLayout(),
+          arg.getSearchFields(), arg.getFilter(),
 
           // Add the new selection to the list of choices
           (sel, selInst) -> {
@@ -143,7 +143,9 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
           },
           // Back button
           arg.getBackButton() == null ? null :
-          selInst -> inst.reopen(AnimationType.SLIDE_RIGHT, selInst)
+          selInst -> inst.reopen(AnimationType.SLIDE_RIGHT, selInst),
+
+          arg.getSingleChoiceLayout()
         ));
     }, null);
 

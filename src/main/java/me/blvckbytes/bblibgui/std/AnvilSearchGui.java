@@ -261,7 +261,7 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
    * @return Filtered list to display
    */
   private List<Tuple<Object, ItemStack>> filterRepresentitives(GuiInstance<SingleChoiceParam> inst, String search) {
-    FilterFunction customFilter = inst.getArg().getCustomFilter();
+    FilterFunction customFilter = inst.getArg().getFilter();
     Tuple<String, IEnum<?>> filter = getFilterState(inst);
 
     // Update search buffer

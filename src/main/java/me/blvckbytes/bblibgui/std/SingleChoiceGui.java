@@ -64,7 +64,7 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
     Player p = inst.getViewer();
     SingleChoiceParam arg = inst.getArg();
     IStdGuiItemProvider itemProvider = arg.getItemProvider();
-    GuiLayoutSection layout = arg.getLayout();
+    GuiLayoutSection layout = arg.getSingleChoiceLayout();
 
     inst.applyLayoutParameters(layout);
 
@@ -92,8 +92,8 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
         // Create a carbon copy of the param and re-route callbacks
         SingleChoiceParam scp = new SingleChoiceParam(
           arg.getTitle(), arg.getRepresentitives(), itemProvider,
-          arg.getLayout(), arg.getSearchLayout(), arg.getSelectionTransform(),
-          arg.getSearchFields(), arg.getCustomFilter(),
+          arg.getSelectionTransform(), arg.getSearchLayout(),
+          arg.getSearchFields(),arg.getFilter(),
 
           // Go back to the single choice GUI after selecting
           (o, i) -> {
@@ -103,7 +103,9 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
           },
 
           // Re-open the choice if nothing was chosen or back was clicked
-          reopen, reopen
+          reopen, reopen,
+
+          arg.getSingleChoiceLayout()
         );
 
         // Temporarily add to chosen just to not trigger any callbacks prematurely

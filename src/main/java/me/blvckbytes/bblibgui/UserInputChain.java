@@ -133,33 +133,38 @@ public class UserInputChain {
   }
 
   /**
-   * Add a new single choice stage
+   * Add a new multiple choice stage
    * @param multipleChoiceGui Multiple choice GUI ref
    * @param field Name of the field
-   * @param type Type of choice (part of the screen title)
-   * @param stdProvider Provider for standard GUI items
-   * @param layout Layout for the main GUI
-   * @param choiceLayout Layout for the single choice GUI
-   * @param representitives List of representitive items and their values
+   * @param title GUI title
+   * @param representitives Input is the variable map, output is a list of representitive items and their values
+   * @param itemProvider Provider for standard GUI items
+   * @param selectionTransform Used to transform selected items
+   * @param searchLayout Layout for the anvil search GUI
+   * @param searchFields Fields that are available for searching within the anvil search GUI
+   * @param filter External filter function for the anvil search GUI
+   * @param singleChoiceLayout Layout for the single choice GUI
+   * @param multipleChoiceLayout Layout for the multiple choice GUI
    * @param skip Optional skip predicate
    */
   public UserInputChain withMultipleChoice(
     MultipleChoiceGui multipleChoiceGui,
     String field,
-    @Nullable Function<ItemStack, ItemStack> selectionTransform,
-    IEnum<?> searchFields,
-    ConfigValue type,
-    IStdGuiItemProvider stdProvider,
-    @Nullable GuiLayoutSection layout,
-    @Nullable GuiLayoutSection choiceLayout,
-    @Nullable GuiLayoutSection searchLayout,
+    ConfigValue title,
     Function<Map<String, Object>, List<Tuple<Object, ItemStack>>> representitives,
+    IStdGuiItemProvider itemProvider,
+    @Nullable Function<ItemStack, ItemStack> selectionTransform,
+    @Nullable GuiLayoutSection searchLayout,
+    IEnum<?> searchFields,
+    FilterFunction filter,
+    @Nullable GuiLayoutSection singleChoiceLayout,
+    @Nullable GuiLayoutSection multipleChoiceLayout,
     @Nullable Function<Map<String, Object>, Boolean> skip
   ) {
     makeStage(multipleChoiceGui, () -> (
       new MultipleChoiceParam(
-        type.asScalar(), representitives.apply(values), stdProvider,
-        layout, choiceLayout, searchLayout, selectionTransform, searchFields, null,
+        title.asScalar(), representitives.apply(values), itemProvider,
+        selectionTransform, searchLayout, searchFields, filter,
 
         // Selected
         (selection, selectionInst) -> {
@@ -174,7 +179,9 @@ public class UserInputChain {
         selectionInst -> this.cancel(),
 
         // Back
-        i -> this.previousStage()
+        i -> this.previousStage(),
+
+        singleChoiceLayout, multipleChoiceLayout
       )
     ), skip);
     return this;
@@ -184,28 +191,33 @@ public class UserInputChain {
    * Add a new single choice stage
    * @param singleChoiceGui Single choice GUI ref
    * @param field Name of the field
-   * @param type Type of choice (part of the screen title)
-   * @param stdProvider Provider for standard GUI items
-   * @param layout Layout for the GUI
-   * @param representitives List of representitive items and their values
+   * @param title GUI title
+   * @param representitives Input is the variable map, output is a list of representitive items and their values
+   * @param itemProvider Provider for standard GUI items
+   * @param selectionTransform Used to transform selected items
+   * @param searchLayout Layout for the anvil search GUI
+   * @param searchFields Fields that are available for searching within the anvil search GUI
+   * @param filter External filter function for the anvil search GUI
+   * @param singleChoiceLayout Layout for the single choice GUI
    * @param skip Optional skip predicate
    */
   public UserInputChain withSingleChoice(
     SingleChoiceGui singleChoiceGui,
     String field,
-    @Nullable Function<ItemStack, ItemStack> selectionTransform,
-    IEnum<?> searchFields,
-    ConfigValue type,
-    IStdGuiItemProvider stdProvider,
-    @Nullable GuiLayoutSection layout,
-    @Nullable GuiLayoutSection searchLayout,
+    ConfigValue title,
     Function<Map<String, Object>, List<Tuple<Object, ItemStack>>> representitives,
+    IStdGuiItemProvider itemProvider,
+    @Nullable Function<ItemStack, ItemStack> selectionTransform,
+    @Nullable GuiLayoutSection searchLayout,
+    IEnum<?> searchFields,
+    FilterFunction filter,
+    @Nullable GuiLayoutSection singleChoiceLayout,
     @Nullable Function<Map<String, Object>, Boolean> skip
   ) {
     makeStage(singleChoiceGui, () -> (
       new SingleChoiceParam(
-        type.asScalar(), representitives.apply(values),
-        stdProvider, layout, searchLayout, selectionTransform, searchFields, null,
+        title.asScalar(), representitives.apply(values), itemProvider,
+        selectionTransform, searchLayout, searchFields, filter,
 
         // Selected
         (selection, selectionInst) -> {
@@ -220,7 +232,9 @@ public class UserInputChain {
         selectionInst -> this.cancel(),
 
         // Back
-        i -> this.previousStage()
+        i -> this.previousStage(),
+
+        singleChoiceLayout
       )
     ), skip);
     return this;

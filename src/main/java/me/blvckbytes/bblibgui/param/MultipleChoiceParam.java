@@ -1,6 +1,5 @@
 package me.blvckbytes.bblibgui.param;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import me.blvckbytes.bblibgui.FilterFunction;
 import me.blvckbytes.bblibgui.GuiInstance;
@@ -23,44 +22,27 @@ import java.util.function.Function;
   The parameter used to open a new multiple choice GUI.
 */
 @Getter
-@AllArgsConstructor
-public class MultipleChoiceParam {
-  // GUI title
-  private String title;
-
-  // List of choices, objects represented by itemstacks
-  private List<Tuple<Object, ItemStack>> representitives;
-
-  // Provider for standard parameters used in GUIs
-  private IStdGuiItemProvider itemProvider;
+public class MultipleChoiceParam extends AChoiceParam<MultipleChoiceParam> {
 
   // Optional custom GUI layout specification
-  // Available slots: prevPage, currPage, nextPage, back, submit, newChoice
-  private @Nullable GuiLayoutSection layout;
+  private final @Nullable GuiLayoutSection singleChoiceLayout, multipleChoiceLayout;
 
-  // Optional custom GUI layout specification
-  // Available slots: See SingleChoiceParam
-  private @Nullable GuiLayoutSection choiceLayout;
-
-  // Optional custom GUI layout specification
-  // Available slots: See SingleChoiceParam
-  private @Nullable GuiLayoutSection searchLayout;
-
-  // Used to transform selected items
-  private @Nullable Function<ItemStack, ItemStack> selectionTransform;
-
-  // Available fields for filtering
-  private IEnum<?> searchFields;
-
-  // Custom external filtering function
-  private FilterFunction customFilter;
-
-  // Selection callback, provides the bound object and the GUI ref
-  private BiConsumer<List<Object>, GuiInstance<MultipleChoiceParam>> selected;
-
-  // Inventory close callback, providing a ref to the closed GUI
-  private @Nullable Consumer<GuiInstance<MultipleChoiceParam>> closed;
-
-  // Back button, providing a ref to the GUI about to navigate away from
-  private @Nullable Consumer<GuiInstance<MultipleChoiceParam>> backButton;
+  public MultipleChoiceParam(
+    String title,
+    List<Tuple<Object, ItemStack>> representitives,
+    IStdGuiItemProvider itemProvider,
+    @Nullable Function<ItemStack, ItemStack> selectionTransform,
+    @Nullable GuiLayoutSection searchLayout,
+    IEnum<?> searchFields,
+    FilterFunction filter,
+    BiConsumer<Object, GuiInstance<MultipleChoiceParam>> selected,
+    @Nullable Consumer<GuiInstance<MultipleChoiceParam>> closed,
+    @Nullable Consumer<GuiInstance<MultipleChoiceParam>> backButton,
+    @Nullable GuiLayoutSection singleChoiceLayout,
+    @Nullable GuiLayoutSection multipleChoiceLayout
+  ) {
+    super(title, representitives, itemProvider, selectionTransform, searchLayout, searchFields, filter, selected, closed, backButton);
+    this.singleChoiceLayout = singleChoiceLayout;
+    this.multipleChoiceLayout = multipleChoiceLayout;
+  }
 }
