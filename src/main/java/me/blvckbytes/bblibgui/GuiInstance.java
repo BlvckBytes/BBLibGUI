@@ -38,6 +38,9 @@ public class GuiInstance<T> {
   // A list of pages, where each page maps a used page slot to an item
   private final List<Map<Integer, GuiItem>> pages;
 
+  // Redraw listeners per slot
+  private final Map<Integer, List<Runnable>> redrawListeners;
+
   private final IFakeItemCommunicator fakeItemCommunicator;
   private final APlugin plugin;
   private final int instanceId;
@@ -86,6 +89,7 @@ public class GuiInstance<T> {
     this.fakeItemCommunicator = fakeItemCommunicator;
 
     this.fixedItems = new HashMap<>();
+    this.redrawListeners = new HashMap<>();
     this.pages = new ArrayList<>();
     this.invCache = new ArrayList<>();
     this.pageSlots = new ArrayList<>(template.getPageSlots());
@@ -429,6 +433,19 @@ public class GuiInstance<T> {
   }
 
   /**
+   * Register a new listener for a specific slot's redraw events
+   * @param slotExpr Target slot expression
+   * @param callback Event listener
+   */
+  public void onRedrawing(String slotExpr, Runnable callback) {
+    template.slotExprToSlots(slotExpr).forEach(slot -> {
+      if (!this.redrawListeners.containsKey(slot))
+        this.redrawListeners.put(slot, new ArrayList<>());
+      this.redrawListeners.get(slot).add(callback);
+    });
+  }
+
+  /**
    * Get an item by it's current slot
    * @param slot Slot to search in
    * @return Optional item, empty if that slot is vacant
@@ -666,6 +683,9 @@ public class GuiInstance<T> {
    * @param item Item to set
    */
   private void setItem(Inventory inv, int slot, ItemStack item) {
+    // Call all redraw listeners for this slot
+    redrawListeners.getOrDefault(slot, new ArrayList<>()).forEach(Runnable::run);
+
     while (slot >= invCache.size())
       invCache.add(null);
     invCache.set(slot, item);
