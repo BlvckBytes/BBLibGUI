@@ -95,11 +95,10 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
           arg.getSelectionTransform(), arg.getSearchLayout(),
           arg.getSearchFields(),arg.getFilter(),
 
-          // Go back to the single choice GUI after selecting
+          // Simulate a choice as it would have been emitted by this GUI
           (o, i) -> {
             haveChosen.put(inst, o);
             arg.getSelected().accept(o, i);
-            reopen.accept(i);
           },
 
           // Re-open the choice if nothing was chosen or back was clicked
