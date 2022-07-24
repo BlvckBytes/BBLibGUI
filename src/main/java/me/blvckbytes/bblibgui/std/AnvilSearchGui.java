@@ -20,7 +20,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -355,39 +354,30 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
 
     // Create a value buffer of either size two (displayname, lore) or the number of available fields
     IFilterEnum<?> fields = filterState.getB();
-    String[] valueBuffer = new String[fields == null ? 2 : fields.getFields().length];
     String[] searchWords = search.toLowerCase().split(" ");
-
-    // Set value fields accessible, if available
-    Field[] valueFields = null;
-    if (fields != null) {
-      valueFields = fields.getFields();
-
-      // Ensure that all fields are accessible
-      for (Field valueField : valueFields)
-        valueField.setAccessible(true);
-    }
 
     // Extend each of the results by it's diff metric
     List<Tuple<Tuple<Object, ItemStack>, Integer>> results = new ArrayList<>();
 
     for (Tuple<Object, ItemStack> item : inst.getArg().getRepresentitives()) {
 
-      // Value fields provided, use them
-      if (valueFields != null) {
-        // Resolve all search fields for the current object
-        resolveFields(valueFields, valueBuffer, item.getA());
-      }
+      String[] texts;
 
       // No fields available, use displayname and lore of the item as a fallback
-      else {
+      if (fields == null) {
         ItemMeta meta = item.getB().getItemMeta();
-        valueBuffer[0] = meta == null ? "" : meta.getDisplayName();
-        valueBuffer[1] = meta == null ? "" : String.join(" ", meta.getLore());
+        texts = new String[] {
+          meta == null ? "" : meta.getDisplayName(),
+          meta == null ? "" : String.join(" ", meta.getLore())
+        };
       }
 
+      // Use the enum as an extractor on the current object
+      else
+        texts = fields.getTexts().apply(item.getA());
+
       // Skip items which don't match at all
-      int diff = calculateDifference(searchWords, valueBuffer);
+      int diff = calculateDifference(searchWords, texts);
       if (diff >= 0)
         results.add(new Tuple<>(item, diff));
     }
@@ -398,22 +388,6 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
       .sorted(Comparator.comparingInt(Tuple::getB))
       .map(Tuple::getA)
       .collect(Collectors.toList());
-  }
-
-  /**
-   * Resolve an array of fields for a given object
-   * @param fields Target fields
-   * @param outBuf Value output buffer
-   * @param o Target object to resolve on
-   */
-  private void resolveFields(Field[] fields, String[] outBuf, Object o) {
-    for (int i = 0; i < fields.length; i++) {
-      try {
-        outBuf[i] = fields[i].get(o).toString();
-      } catch (Exception ignored) {
-        outBuf[i] = "";
-      }
-    }
   }
 
   /**

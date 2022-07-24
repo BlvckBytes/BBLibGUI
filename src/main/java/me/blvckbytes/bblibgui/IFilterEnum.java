@@ -2,7 +2,7 @@ package me.blvckbytes.bblibgui;
 
 import me.blvckbytes.bblibutil.IEnum;
 
-import java.lang.reflect.Field;
+import java.util.function.Function;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -14,9 +14,9 @@ import java.lang.reflect.Field;
 public interface IFilterEnum<T extends Enum<?>> extends IEnum<T> {
 
   /**
-   * Get a list of target fields to use for filtering
+   * Get a list of texts to search through when provided a model's instance
    */
-  Field[] getFields();
+  Function<Object, String[]> getTexts();
 
   /**
    * Get the next enum value in the enum's ordinal sequence
