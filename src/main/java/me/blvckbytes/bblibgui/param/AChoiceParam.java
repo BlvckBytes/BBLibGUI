@@ -2,8 +2,8 @@ package me.blvckbytes.bblibgui.param;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 import me.blvckbytes.bblibgui.*;
-import me.blvckbytes.bblibutil.IEnum;
 import me.blvckbytes.bblibutil.Tuple;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +29,7 @@ public abstract class AChoiceParam<T> implements IAnvilGuiParam<T> {
   private final String title;
 
   // List of choices, objects represented by itemstacks
-  private final List<Tuple<Object, ItemStack>> representitives;
+  @Setter private List<Tuple<Object, ItemStack>> representitives;
 
   // Provider for standard parameters used in GUIs
   private final IStdGuiItemProvider itemProvider;

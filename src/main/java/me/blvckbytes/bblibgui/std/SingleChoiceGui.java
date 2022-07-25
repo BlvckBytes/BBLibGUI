@@ -1,12 +1,12 @@
 package me.blvckbytes.bblibgui.std;
 
 import me.blvckbytes.bblibconfig.ConfigValue;
+import me.blvckbytes.bblibdi.AutoConstruct;
+import me.blvckbytes.bblibdi.AutoInject;
 import me.blvckbytes.bblibgui.*;
 import me.blvckbytes.bblibgui.param.SingleChoiceParam;
 import me.blvckbytes.bblibpackets.IFakeItemCommunicator;
 import me.blvckbytes.bblibutil.APlugin;
-import me.blvckbytes.bblibdi.AutoConstruct;
-import me.blvckbytes.bblibdi.AutoInject;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -125,6 +125,16 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
       );
     }
 
+    updateRepresentitives(inst);
+    return true;
+  }
+
+  /**
+   * Update the representitives of this GUI according to it's
+   * current arg's representitive list
+   * @param inst Target inst ref
+   */
+  public void updateRepresentitives(GuiInstance<SingleChoiceParam> inst) {
     inst.setPageContents(() -> {
       Object previousChoice = haveChosen.get(inst);
       Function<ItemStack, ItemStack> selTr = inst.getArg().getSelectionTransform();
@@ -143,8 +153,6 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
           null
         ))
         .collect(Collectors.toList());
-      });
-
-    return true;
+    });
   }
 }

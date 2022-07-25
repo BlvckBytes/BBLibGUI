@@ -82,7 +82,7 @@ public class UserInputChain {
         },
         inst -> this.cancel()
       )
-    ), skip);
+    ), null, skip);
     return this;
   }
 
@@ -127,7 +127,7 @@ public class UserInputChain {
         },
         i -> this.previousStage()
       )
-    ), skip);
+    ), null, skip);
     return this;
   }
 
@@ -182,7 +182,7 @@ public class UserInputChain {
 
         singleChoiceLayout, multipleChoiceLayout
       )
-    ), skip);
+    ), null, skip);
     return this;
   }
 
@@ -235,7 +235,14 @@ public class UserInputChain {
 
         singleChoiceLayout
       )
-    ), skip);
+    ), i -> {
+      // Update representitives when resuming using the provided supplier function,
+      // as the values map could've changed and now this stage may display different items
+      @SuppressWarnings("unchecked")
+      GuiInstance<SingleChoiceParam> scpI = (GuiInstance<SingleChoiceParam>) i;
+      scpI.getArg().setRepresentitives(representitives.apply(values));
+      singleChoiceGui.updateRepresentitives(scpI);
+    }, skip);
     return this;
   }
 
@@ -265,11 +272,13 @@ public class UserInputChain {
    * Make a new lazily created GUI stage
    * @param gui GUI template ref
    * @param param GUI parameter builder
+   * @param resumed Callback when resuming the function
    * @param skip Stage skip predicate
    */
   private<T> void makeStage(
     AGui<T> gui,
     Supplier<T> param,
+    @Nullable Consumer<GuiInstance<?>> resumed,
     @Nullable Function<Map<String, Object>, Boolean> skip
   ) {
     int index = stages.size();
@@ -280,8 +289,11 @@ public class UserInputChain {
 
       Tuple<Supplier<GuiInstance<?>>, @Nullable GuiInstance<?>> data = stages.get(index);
 
-      if (data.getB() != null)
+      if (data.getB() != null) {
+        if (resumed != null)
+          resumed.accept(data.getB());
         return data.getB();
+      }
 
       GuiInstance<?> inst = gui.createSilent(main.getViewer(), param.get()).orElse(null);
       data.setB(inst);
