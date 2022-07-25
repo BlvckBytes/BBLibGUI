@@ -247,6 +247,11 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
     // Create a list of unique words which all of the texts contain
     Set<String> availWords = new HashSet<>();
     for (String text : texts) {
+
+      // Account for provider errors
+      if (text == null)
+        continue;
+
       for (String textWord : text.split(" "))
         availWords.add(textWord.toLowerCase());
     }
