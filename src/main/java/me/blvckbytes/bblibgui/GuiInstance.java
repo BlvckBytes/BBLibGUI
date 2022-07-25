@@ -52,7 +52,6 @@ public class GuiInstance<T> {
   private GuiAnimation currAnimation;
   private ItemStack spacer;
   private Runnable updatePagination;
-  private String currTitle;
 
   @Setter private Supplier<List<GuiItem>> pageContents;
   @Setter private Consumer<Long> tickReceiver;
@@ -65,6 +64,7 @@ public class GuiInstance<T> {
   @Getter private final Player viewer;
   @Getter private Inventory inv;
   @Getter private final T arg;
+  @Getter private String currTitle;
 
   /**
    * Create a new GUI instance from a template instance
