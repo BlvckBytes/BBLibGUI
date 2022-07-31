@@ -260,6 +260,10 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     if (inst == null || !inst.getInv().equals(e.getInventory()))
       return;
 
+    // Ignore if it's an obsolete, previous inventory
+    if (e.getInventory().equals(inst.getPreviousInv()))
+      return;
+
     // Destroy the instance
     activeInstances.remove(p);
 

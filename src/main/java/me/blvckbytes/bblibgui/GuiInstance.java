@@ -65,6 +65,7 @@ public class GuiInstance<T> {
   @Getter private Inventory inv;
   @Getter private final T arg;
   @Getter private String currTitle;
+  @Getter private Inventory previousInv;
 
   /**
    * Create a new GUI instance from a template instance
@@ -190,7 +191,10 @@ public class GuiInstance<T> {
     for (int i = 0; i < Math.min(this.inv.getSize(), newInv.getSize()); i++)
       setItem(newInv, i, this.inv.getItem(i));
 
+    // Store the previous inventory to ignore it's close event, then show the new UI
+    this.previousInv = this.inv;
     this.inv = newInv;
+    viewer.openInventory(this.inv);
   }
 
   /**
