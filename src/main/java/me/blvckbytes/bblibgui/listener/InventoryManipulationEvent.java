@@ -80,6 +80,18 @@ public class InventoryManipulationEvent extends Event implements Cancellable {
     return Optional.empty();
   }
 
+  /**
+   * Checks whether this action was taking items out of the inventory
+   */
+  public boolean isTakeOut() {
+    return (
+      action == ManipulationAction.PICKUP ||
+      action == ManipulationAction.DROP ||
+      // Moved into the player's inventory
+      (action == ManipulationAction.MOVE && targetInventory.equals(player.getInventory()))
+    );
+  }
+
   @Override
   public HandlerList getHandlers() {
     return HANDLERS;
