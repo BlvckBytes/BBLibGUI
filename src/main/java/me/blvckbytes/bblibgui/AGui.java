@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import me.blvckbytes.bblibconfig.ConfigValue;
 import me.blvckbytes.bblibgui.listener.InventoryManipulationEvent;
-import me.blvckbytes.bblibpackets.IFakeItemCommunicator;
+import me.blvckbytes.bblibreflect.IFakeItemCommunicator;
 import me.blvckbytes.bblibutil.APlugin;
 import me.blvckbytes.bblibdi.IAutoConstructed;
 import org.apache.commons.lang.WordUtils;

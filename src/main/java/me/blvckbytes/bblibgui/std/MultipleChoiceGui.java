@@ -4,7 +4,7 @@ import me.blvckbytes.bblibconfig.ConfigValue;
 import me.blvckbytes.bblibgui.*;
 import me.blvckbytes.bblibgui.param.MultipleChoiceParam;
 import me.blvckbytes.bblibgui.param.SingleChoiceParam;
-import me.blvckbytes.bblibpackets.IFakeItemCommunicator;
+import me.blvckbytes.bblibreflect.IFakeItemCommunicator;
 import me.blvckbytes.bblibutil.APlugin;
 import me.blvckbytes.bblibdi.AutoConstruct;
 import me.blvckbytes.bblibdi.AutoInject;

@@ -2,7 +2,7 @@ package me.blvckbytes.bblibgui.listener;
 
 import me.blvckbytes.bblibdi.AutoConstruct;
 import me.blvckbytes.bblibdi.AutoInject;
-import me.blvckbytes.bblibpackets.MCReflect;
+import me.blvckbytes.bblibreflect.MCReflect;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;

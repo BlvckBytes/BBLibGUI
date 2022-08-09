@@ -40,7 +40,7 @@
         <!-- Packet library -->
         <dependency>
             <groupId>me.blvckbytes</groupId>
-            <artifactId>bblibpackets</artifactId>
+            <artifactId>bblibreflect</artifactId>
             <version>0.1</version>
         </dependency>
 

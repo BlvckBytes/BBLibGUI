@@ -5,7 +5,7 @@ import me.blvckbytes.bblibdi.AutoConstruct;
 import me.blvckbytes.bblibdi.AutoInject;
 import me.blvckbytes.bblibgui.*;
 import me.blvckbytes.bblibgui.param.SingleChoiceParam;
-import me.blvckbytes.bblibpackets.IFakeItemCommunicator;
+import me.blvckbytes.bblibreflect.IFakeItemCommunicator;
 import me.blvckbytes.bblibutil.APlugin;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
