@@ -3,7 +3,6 @@ package me.blvckbytes.bblibgui.listener;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.inventory.ClickType;
@@ -68,6 +67,18 @@ public class InventoryManipulationEvent extends Event {
    * @return Horbar key if pressed
    */
   public Optional<Integer> getHotbarKey() {
+    // -1 means Offhand, an alternative hotbar slot
+    if (
+      action == ManipulationAction.MOVE &&
+        (
+          // Move into offhand
+          (targetInventory == player.getInventory() && targetSlot == -1) ||
+          // Move from offhand
+          (originInventory == player.getInventory() && originSlot == -1)
+        )
+    )
+      return Optional.of(-1);
+
     // No number key has been pressed
     if (click != ClickType.NUMBER_KEY)
       return Optional.empty();
