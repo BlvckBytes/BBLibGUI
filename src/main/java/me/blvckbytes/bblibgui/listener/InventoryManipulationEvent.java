@@ -24,11 +24,11 @@ public class InventoryManipulationEvent extends Event {
 
   // Origin has always been taken from and target inventory is where the items are taken to
   // If an action only affects one slot, origin will be equal to target
-  private final Inventory originInventory, targetInventory;
+  private final Inventory originInventory, targetInventory, clickedInventory;
 
   private final Player player;
   private final ManipulationAction action;
-  private final int originSlot, targetSlot;
+  private final int originSlot, targetSlot, clickedSlot;
   private final ClickType click;
   private final int sequenceId, sequenceTotal;
 
@@ -42,20 +42,24 @@ public class InventoryManipulationEvent extends Event {
   public InventoryManipulationEvent(
     Inventory originInventory,
     Inventory targetInventory,
+    Inventory clickedInventory,
     Player player,
     ManipulationAction action,
     int originSlot,
     int targetSlot,
+    int clickedSlot,
     ClickType click,
     int sequenceId,
     int sequenceTotal
   ) {
     this.originInventory = originInventory;
     this.targetInventory = targetInventory;
+    this.clickedInventory = clickedInventory;
     this.player = player;
     this.action = action;
     this.originSlot = originSlot;
     this.targetSlot = targetSlot;
+    this.clickedSlot = clickedSlot;
     this.click = click;
     this.sequenceId = sequenceId;
     this.sequenceTotal = sequenceTotal;
@@ -137,9 +141,12 @@ public class InventoryManipulationEvent extends Event {
       "  player=" + player.getName() + "\n" +
       "  originSlot=" + originSlot + "\n" +
       "  targetSlot=" + targetSlot + "\n" +
+      "  clickedSlot=" + clickedSlot + "\n" +
       "  action=" + action + "\n" +
       "  originInventoryHolder=" + originInventory.getHolder() + "\n" +
       "  targetInventoryHolder=" + targetInventory.getHolder() + "\n" +
+      "  clickedInventoryHolder=" + clickedInventory.getHolder() + "\n" +
+      "  sequence=" + sequenceId + "/" + sequenceTotal + "\n" +
       ")"
     );
   }
