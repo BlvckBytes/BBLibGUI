@@ -32,4 +32,19 @@ public class GuiLayoutSection extends AConfigSection {
     this.paginated = "";
     this.slots = new HashMap<>();
   }
+
+  /**
+   * Get a numeric slot value or use a default on
+   * formatting errors or absent values
+   * @param name Key name within slots map
+   * @param def Default value
+   * @return Map value or default value
+   */
+  public int getSlotOrDefault(String name, int def) {
+    try {
+      return Integer.parseInt(slots.get(name));
+    } catch (Exception e) {
+      return def;
+    }
+  }
 }
