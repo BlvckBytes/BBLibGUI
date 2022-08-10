@@ -248,18 +248,29 @@ public class InventoryListener implements Listener {
     Player p = (Player) e.getWhoClicked();
     Inventory top = p.getOpenInventory().getTopInventory();
 
+    Integer[] slots = new Integer[e.getRawSlots().size()];
+    e.getRawSlots().toArray(slots);
+
     // Check whether this drag event needs to be cancelled by firing an individual
     // place event for each slot (because that's what in effect occurs). If any event
     // receiver cancels any of the slots, the whole drag event needs to be cancelled.
-    boolean cancel = e.getRawSlots().stream()
-      .anyMatch(slot -> {
 
-        // This slot didn't affect the top inventory, always permit
-        if (slot >= top.getSize())
-          return false;
+    boolean cancel = false;
+    for (int i = 0; i < slots.length; i++) {
+      int slot = slots[i];
 
-        return checkCancellation(e.getInventory(), p, ManipulationAction.PLACE, slot, ClickType.RIGHT);
-      });
+      // This slot didn't affect the top inventory, always permit
+      if (slot >= top.getSize())
+        continue;
+
+      // Not a cancel cause
+      if (!checkCancellation(e.getInventory(), p, ManipulationAction.PLACE, slot, ClickType.RIGHT, i + 1, slots.length))
+        continue;
+
+      // Cancels, stop iterating
+      cancel = true;
+      break;
+    }
 
     if (cancel)
       e.setCancelled(true);
@@ -276,7 +287,23 @@ public class InventoryListener implements Listener {
    * @return True if the action needs to be cancelled
    */
   private boolean checkCancellation(Inventory inv, Player p, ManipulationAction action, int slot, ClickType click) {
-    return checkCancellation(inv, inv, p, action, slot, slot, click);
+    return checkCancellation(inv, inv, p, action, slot, slot, click, 1, 1);
+  }
+
+  /**
+   * Check whether the expressed action has been cancelled by any event receiver
+   *
+   * @param inv    Inventory of action
+   * @param p      Event causing player
+   * @param action Action that has been taken
+   * @param slot   Slot of action
+   * @param click    Type of click
+   * @param sequenceId    Sequence ID
+   * @param sequenceTotal Total number of sequence items
+   * @return True if the action needs to be cancelled
+   */
+  private boolean checkCancellation(Inventory inv, Player p, ManipulationAction action, int slot, ClickType click, int sequenceId, int sequenceTotal) {
+    return checkCancellation(inv, inv, p, action, slot, slot, click, sequenceId, sequenceTotal);
   }
 
   /**
@@ -292,8 +319,26 @@ public class InventoryListener implements Listener {
    * @return True if the action needs to be cancelled
    */
   private boolean checkCancellation(Inventory fromInv, Inventory toInv, Player p, ManipulationAction action, int fromSlot, int toSlot, ClickType click) {
+    return checkCancellation(fromInv, toInv, p, action, fromSlot, toSlot, click, 1, 1);
+  }
+
+  /**
+   * Check whether the expressed action has been cancelled by any event receiver
+   *
+   * @param fromInv  Inventory that has been taken from
+   * @param toInv    Inventory that has been added to
+   * @param p        Event causing player
+   * @param action   Action that has been taken
+   * @param fromSlot Slot that has been taken from
+   * @param toSlot   Slot that has been added to
+   * @param click    Type of click
+   * @param sequenceId    Sequence ID
+   * @param sequenceTotal Total number of sequence items
+   * @return True if the action needs to be cancelled
+   */
+  private boolean checkCancellation(Inventory fromInv, Inventory toInv, Player p, ManipulationAction action, int fromSlot, int toSlot, ClickType click, int sequenceId, int sequenceTotal) {
     InventoryManipulationEvent ime = new InventoryManipulationEvent(
-      fromInv, toInv, p, action, fromSlot, toSlot, click
+      fromInv, toInv, p, action, fromSlot, toSlot, click, sequenceId, sequenceTotal
     );
 
     Bukkit.getPluginManager().callEvent(ime);

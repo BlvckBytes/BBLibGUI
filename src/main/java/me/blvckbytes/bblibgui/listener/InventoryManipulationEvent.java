@@ -30,6 +30,7 @@ public class InventoryManipulationEvent extends Event implements Cancellable {
   private final ManipulationAction action;
   private final int originSlot, targetSlot;
   private final ClickType click;
+  private final int sequenceId, sequenceTotal;
 
   @Setter
   private boolean cancelled;
@@ -41,7 +42,9 @@ public class InventoryManipulationEvent extends Event implements Cancellable {
     ManipulationAction action,
     int originSlot,
     int targetSlot,
-    ClickType click
+    ClickType click,
+    int sequenceId,
+    int sequenceTotal
   ) {
     this.originInventory = originInventory;
     this.targetInventory = targetInventory;
@@ -50,6 +53,8 @@ public class InventoryManipulationEvent extends Event implements Cancellable {
     this.originSlot = originSlot;
     this.targetSlot = targetSlot;
     this.click = click;
+    this.sequenceId = sequenceId;
+    this.sequenceTotal = sequenceTotal;
   }
 
   /**
@@ -78,6 +83,13 @@ public class InventoryManipulationEvent extends Event implements Cancellable {
     }
 
     return Optional.empty();
+  }
+
+  /**
+   * Checks whether this event is the last call of a batch-call
+   */
+  public boolean isLastOfBatch() {
+    return sequenceId == sequenceTotal;
   }
 
   /**
