@@ -199,10 +199,26 @@ public class InventoryListener implements Listener {
 
       ManipulationAction action = isCollect ? ManipulationAction.COLLECT : ManipulationAction.PICKUP;
 
-      if (slotsTop.stream().anyMatch(slot -> checkCancellation(top, p, action, slot, e.getClick())))
-        e.setCancelled(true);
+      boolean cancel = false;
+      int totalTop = slotsTop.size(), totalOwn = slotsOwn.size();
 
-      if (slotsOwn.stream().anyMatch(slot -> checkCancellation(p.getInventory(), p, action, slot, e.getClick())))
+      int c = 0;
+      for (int slot : slotsTop) {
+        if (checkCancellation(top, e.getClickedInventory(), p, action, slot, e.getSlot(), e.getClick(), ++c, totalTop)) {
+          cancel = true;
+          break;
+        }
+      }
+
+      c = 0;
+      for (int slot : slotsOwn) {
+        if (checkCancellation(p.getInventory(), e.getClickedInventory(), p, action, slot, e.getSlot(), e.getClick(), ++c, totalOwn)) {
+          cancel = true;
+          break;
+        }
+      }
+
+      if (cancel)
         e.setCancelled(true);
 
       return;
