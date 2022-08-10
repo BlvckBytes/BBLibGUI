@@ -3,6 +3,9 @@ package me.blvckbytes.bblibgui.listener;
 import me.blvckbytes.bblibdi.AutoConstruct;
 import me.blvckbytes.bblibdi.AutoInject;
 import me.blvckbytes.bblibreflect.MCReflect;
+import me.blvckbytes.bblibutil.APlugin;
+import me.blvckbytes.bblibutil.Triple;
+import me.blvckbytes.bblibutil.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -13,6 +16,9 @@ import org.bukkit.inventory.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -26,7 +32,6 @@ public class InventoryListener implements Listener {
 
   // List of smeltable items
   private static final List<Material> smeltable;
-  private final MCReflect refl;
 
   static {
     smeltable = new ArrayList<>();
@@ -40,10 +45,15 @@ public class InventoryListener implements Listener {
     }
   }
 
+  private final MCReflect refl;
+  private final APlugin plugin;
+
   public InventoryListener(
-    @AutoInject MCReflect refl
+    @AutoInject MCReflect refl,
+    @AutoInject APlugin plugin
   ) {
     this.refl = refl;
+    this.plugin = plugin;
   }
 
   @EventHandler
@@ -79,25 +89,25 @@ public class InventoryListener implements Listener {
       if (hotbar != null && target != null) {
         // Moved around only in their own inventory
         if (p.getInventory().equals(clickedInventory)) {
-          if (checkCancellation(p.getInventory(), p.getInventory(), p, ManipulationAction.SWAP, e.getHotbarButton(), clickedSlot, e.getClick()))
+          if (cvB(checkCancellation(p.getInventory(), p.getInventory(), p, ManipulationAction.SWAP, e.getHotbarButton(), clickedSlot, e.getClick())))
             e.setCancelled(true);
         }
 
         else {
-          if (checkCancellation(p.getInventory(), clickedInventory, p, ManipulationAction.SWAP, e.getHotbarButton(), clickedSlot, e.getClick()))
+          if (cvB(checkCancellation(p.getInventory(), clickedInventory, p, ManipulationAction.SWAP, e.getHotbarButton(), clickedSlot, e.getClick())))
             e.setCancelled(true);
         }
       }
 
       // Moved into hotbar
       else if (hotbar == null && target != null) {
-        if (checkCancellation(clickedInventory, p.getInventory(), p, ManipulationAction.MOVE, clickedSlot, e.getHotbarButton(), e.getClick()))
+        if (cvB(checkCancellation(clickedInventory, p.getInventory(), p, ManipulationAction.MOVE, clickedSlot, e.getHotbarButton(), e.getClick())))
           e.setCancelled(true);
       }
 
       // Moved into foreign
       else if (hotbar != null) {
-        if (checkCancellation(p.getInventory(), clickedInventory, p, ManipulationAction.MOVE, e.getHotbarButton(), clickedSlot, e.getClick()))
+        if (cvB(checkCancellation(p.getInventory(), clickedInventory, p, ManipulationAction.MOVE, e.getHotbarButton(), clickedSlot, e.getClick())))
           e.setCancelled(true);
       }
 
@@ -202,9 +212,19 @@ public class InventoryListener implements Listener {
       boolean cancel = false;
       int totalTop = slotsTop.size(), totalOwn = slotsOwn.size();
 
+      List<Triple<Inventory, Integer, ItemStack>> ignoreBackup = new ArrayList<>();
+
       int c = 0;
       for (int slot : slotsTop) {
-        if (checkCancellation(top, e.getClickedInventory(), p, action, slot, e.getSlot(), e.getClick(), ++c, totalTop)) {
+        Boolean mode = checkCancellation(top, e.getClickedInventory(), p, action, slot, e.getSlot(), e.getClick(), ++c, totalTop);
+
+        // Ignore this field
+        if (mode == null) {
+          ignoreBackup.add(new Triple<>(top, slot, new ItemStack(top.getItem(slot))));
+          continue;
+        }
+
+        if (mode) {
           cancel = true;
           break;
         }
@@ -212,7 +232,15 @@ public class InventoryListener implements Listener {
 
       c = 0;
       for (int slot : slotsOwn) {
-        if (checkCancellation(p.getInventory(), e.getClickedInventory(), p, action, slot, e.getSlot(), e.getClick(), ++c, totalOwn)) {
+        Boolean mode = checkCancellation(p.getInventory(), e.getClickedInventory(), p, action, slot, e.getSlot(), e.getClick(), ++c, totalOwn);
+
+        // Ignore this field
+        if (mode == null) {
+          ignoreBackup.add(new Triple<>(p.getInventory(), slot, new ItemStack(p.getInventory().getItem(slot))));
+          continue;
+        }
+
+        if (mode) {
           cancel = true;
           break;
         }
@@ -220,6 +248,66 @@ public class InventoryListener implements Listener {
 
       if (cancel)
         e.setCancelled(true);
+
+      // Ignore backup list is populated
+      if (ignoreBackup.size() > 0) {
+        // On next tick (right after the action)
+        plugin.runTask(() -> {
+          // Restore field by field and keep track of how many items were taken
+          int ignoreSubtract = 0;
+          for (Triple<Inventory, Integer, ItemStack> ignoreSlot : ignoreBackup) {
+            ignoreSlot.getA().setItem(ignoreSlot.getB(), ignoreSlot.getC());
+            ignoreSubtract += ignoreSlot.getC().getAmount();
+          }
+
+          List<Tuple<? extends Inventory, Integer>> slots = Stream.concat(
+            // Only affected slots from the top inventory
+            slotsTop.stream().map(s -> new Tuple<>(top, s)),
+            // All slots from the player's inventory
+            IntStream.range(0, p.getInventory().getStorageContents().length)
+              .mapToObj(s -> new Tuple<>(p.getInventory(), s))
+          )
+            // Filter out slots which were ignore-backuped
+            .filter(t -> ignoreBackup.stream().noneMatch(t2 -> (
+              // Same inventory and same slot
+              t.getA().equals(t2.getA()) && t.getB().equals(t2.getB()))
+            ))
+            .collect(Collectors.toList());
+
+          // Iterate all slots and try to subtract the ignore-amount again
+          for (Tuple<? extends Inventory, Integer> slotT : slots) {
+            Inventory slotInv = slotT.getA();
+            int slot = slotT.getB();
+
+            if (ignoreSubtract <= 0)
+              break;
+
+            // Item unusable for subtraction
+            ItemStack curr = slotInv.getItem(slot);
+            if (curr == null || !curr.isSimilar(p.getItemOnCursor()))
+              continue;
+
+            int rem = Math.min(ignoreSubtract, curr.getAmount());
+            ignoreSubtract -= rem;
+
+            if (rem == curr.getAmount()) {
+              slotInv.setItem(slot, null);
+              continue;
+            }
+
+            curr.setAmount(curr.getAmount() - rem);
+          }
+
+          // Found enough to subtract elsewhere
+          if (ignoreSubtract <= 0)
+            return;
+
+          // Subtract remaining from cursor (should never happen!)
+          ItemStack cursor = p.getItemOnCursor();
+          cursor.setAmount(cursor.getAmount() - ignoreSubtract);
+          p.setItemOnCursor(cursor);
+        });
+      }
 
       return;
     }
@@ -230,14 +318,14 @@ public class InventoryListener implements Listener {
         e.getAction() == InventoryAction.PLACE_ONE ||
         e.getAction() == InventoryAction.PLACE_SOME
     ) {
-      if (checkCancellation(clickedInventory, p, ManipulationAction.PLACE, clickedSlot, e.getClick()))
+      if (cvB(checkCancellation(clickedInventory, p, ManipulationAction.PLACE, clickedSlot, e.getClick())))
         e.setCancelled(true);
       return;
     }
 
     // Swapped a slot with the cursor contents
     if (e.getAction() == InventoryAction.SWAP_WITH_CURSOR) {
-      if (checkCancellation(clickedInventory, p, ManipulationAction.SWAP, clickedSlot, e.getClick()))
+      if (cvB(checkCancellation(clickedInventory, p, ManipulationAction.SWAP, clickedSlot, e.getClick())))
         e.setCancelled(true);
       return;
     }
@@ -247,12 +335,12 @@ public class InventoryListener implements Listener {
       e.getAction() == InventoryAction.DROP_ONE_SLOT ||
       e.getAction() == InventoryAction.DROP_ALL_SLOT
     ) {
-      if (checkCancellation(clickedInventory, p, ManipulationAction.DROP, clickedSlot, e.getClick()))
+      if (cvB(checkCancellation(clickedInventory, p, ManipulationAction.DROP, clickedSlot, e.getClick())))
         e.setCancelled(true);
       return;
     }
 
-    if (checkCancellation(clickedInventory, p, ManipulationAction.CLICK, clickedSlot, e.getClick()))
+    if (cvB(checkCancellation(clickedInventory, p, ManipulationAction.CLICK, clickedSlot, e.getClick())))
       e.setCancelled(true);
   }
 
@@ -280,7 +368,7 @@ public class InventoryListener implements Listener {
         continue;
 
       // Not a cancel cause
-      if (!checkCancellation(e.getInventory(), p, ManipulationAction.PLACE, slot, ClickType.RIGHT, i + 1, slots.length))
+      if (!cvB(checkCancellation(e.getInventory(), p, ManipulationAction.PLACE, slot, ClickType.RIGHT, i + 1, slots.length)))
         continue;
 
       // Cancels, stop iterating
@@ -293,6 +381,13 @@ public class InventoryListener implements Listener {
   }
 
   /**
+   * Convert a nullable boolean's null state to true
+   */
+  private boolean cvB(@Nullable Boolean input) {
+    return input == null || input;
+  }
+
+  /**
    * Check whether the expressed action has been cancelled by any event receiver
    *
    * @param inv    Inventory of action
@@ -302,7 +397,7 @@ public class InventoryListener implements Listener {
    * @param click    Type of click
    * @return True if the action needs to be cancelled
    */
-  private boolean checkCancellation(Inventory inv, Player p, ManipulationAction action, int slot, ClickType click) {
+  private @Nullable Boolean checkCancellation(Inventory inv, Player p, ManipulationAction action, int slot, ClickType click) {
     return checkCancellation(inv, inv, p, action, slot, slot, click, 1, 1);
   }
 
@@ -318,7 +413,7 @@ public class InventoryListener implements Listener {
    * @param sequenceTotal Total number of sequence items
    * @return True if the action needs to be cancelled
    */
-  private boolean checkCancellation(Inventory inv, Player p, ManipulationAction action, int slot, ClickType click, int sequenceId, int sequenceTotal) {
+  private @Nullable Boolean checkCancellation(Inventory inv, Player p, ManipulationAction action, int slot, ClickType click, int sequenceId, int sequenceTotal) {
     return checkCancellation(inv, inv, p, action, slot, slot, click, sequenceId, sequenceTotal);
   }
 
@@ -334,7 +429,7 @@ public class InventoryListener implements Listener {
    * @param click    Type of click
    * @return True if the action needs to be cancelled
    */
-  private boolean checkCancellation(Inventory fromInv, Inventory toInv, Player p, ManipulationAction action, int fromSlot, int toSlot, ClickType click) {
+  private @Nullable Boolean checkCancellation(Inventory fromInv, Inventory toInv, Player p, ManipulationAction action, int fromSlot, int toSlot, ClickType click) {
     return checkCancellation(fromInv, toInv, p, action, fromSlot, toSlot, click, 1, 1);
   }
 
@@ -352,13 +447,13 @@ public class InventoryListener implements Listener {
    * @param sequenceTotal Total number of sequence items
    * @return True if the action needs to be cancelled
    */
-  private boolean checkCancellation(Inventory fromInv, Inventory toInv, Player p, ManipulationAction action, int fromSlot, int toSlot, ClickType click, int sequenceId, int sequenceTotal) {
+  private @Nullable Boolean checkCancellation(Inventory fromInv, Inventory toInv, Player p, ManipulationAction action, int fromSlot, int toSlot, ClickType click, int sequenceId, int sequenceTotal) {
     InventoryManipulationEvent ime = new InventoryManipulationEvent(
       fromInv, toInv, p, action, fromSlot, toSlot, click, sequenceId, sequenceTotal
     );
 
     Bukkit.getPluginManager().callEvent(ime);
-    return ime.isCancelled();
+    return ime.getCancelled();
   }
 
   /**

@@ -8,6 +8,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -18,7 +19,7 @@ import java.util.Optional;
   Represents a pre-analyzed change in an inventory.
 */
 @Getter
-public class InventoryManipulationEvent extends Event implements Cancellable {
+public class InventoryManipulationEvent extends Event {
 
   private static final HandlerList HANDLERS = new HandlerList();
 
@@ -32,8 +33,12 @@ public class InventoryManipulationEvent extends Event implements Cancellable {
   private final ClickType click;
   private final int sequenceId, sequenceTotal;
 
+  // If the cancellation is set to null it also results in the
+  // same forbidding mode like true would, but the implementation
+  // can - if supported - try to ignore this event if it's part of
+  // a batch by undoing it's effect internally.
   @Setter
-  private boolean cancelled;
+  private @Nullable Boolean cancelled;
 
   public InventoryManipulationEvent(
     Inventory originInventory,
@@ -55,6 +60,7 @@ public class InventoryManipulationEvent extends Event implements Cancellable {
     this.click = click;
     this.sequenceId = sequenceId;
     this.sequenceTotal = sequenceTotal;
+    this.cancelled = false;
   }
 
   /**
