@@ -101,7 +101,7 @@ public class InventoryListener implements Listener {
 
       // Moved into hotbar
       else if (hotbar == null && target != null) {
-        if (cvB(checkCancellation(clickedInventory, p.getInventory(), e.getClickedInventory(), p, ManipulationAction.MOVE, clickedSlot, clickedSlot, e.getHotbarButton(), e.getClick())))
+        if (cvB(checkCancellation(clickedInventory, p.getInventory(), e.getClickedInventory(), p, ManipulationAction.MOVE, clickedSlot, e.getHotbarButton(), e.getHotbarButton(), e.getClick())))
           e.setCancelled(true);
       }
 
