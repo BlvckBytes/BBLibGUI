@@ -178,6 +178,16 @@ public class GuiInstance<T> {
   }
 
   /**
+   * Morph this inventory into another type
+   * @param type Target type
+   */
+  public void morph(InventoryType type) {
+    if (type == InventoryType.CHEST)
+      throw new IllegalArgumentException("Please use resize() for chest inventories!");
+    this.inv = Bukkit.createInventory(null, type, currTitle);
+  }
+
+  /**
    * Resizes the inventory to a given number of rows and copies over as much of
    * the previous content as will fit
    * @param rows Number of new rows
