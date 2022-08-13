@@ -1,6 +1,7 @@
 package me.blvckbytes.bblibgui.std;
 
 import me.blvckbytes.bblibconfig.ConfigValue;
+import me.blvckbytes.bblibconfig.IItemBuilderFactory;
 import me.blvckbytes.bblibgui.*;
 import me.blvckbytes.bblibgui.listener.InventoryManipulationEvent;
 import me.blvckbytes.bblibgui.param.SingleChoiceParam;
@@ -61,9 +62,10 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
     @AutoInject IPacketInterceptor packetInterceptor,
     @AutoInject MCReflect refl,
     @AutoInject ILogger logger,
-    @AutoInject IFakeItemCommunicator fakeItem
+    @AutoInject IFakeItemCommunicator fakeItem,
+    @AutoInject IItemBuilderFactory builderFactory
   ) {
-    super(plugin, packetInterceptor, refl, logger, fakeItem);
+    super(plugin, packetInterceptor, refl, logger, fakeItem, builderFactory);
     this.fakeItem = fakeItem;
 
     this.filterState = new HashMap<>();
@@ -113,7 +115,7 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
 
     // Set the background or fill in the hotbar
     if (layout != null && (layout.getFill() != null || layout.getBorder() != null))
-      inst.addSpacer(SHIM_OFFS + "-" + (SHIM_OFFS + 8), layout.getFill().asItem(null).build());
+      inst.addSpacer(SHIM_OFFS + "-" + (SHIM_OFFS + 8), layout.getFill().asItem(builderFactory, null).build());
 
     // Call super after fill/border to allow for overriding fixed items
     super.opening(inst);

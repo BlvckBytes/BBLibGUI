@@ -1,6 +1,7 @@
 package me.blvckbytes.bblibgui.std;
 
 import me.blvckbytes.bblibconfig.ConfigValue;
+import me.blvckbytes.bblibconfig.IItemBuilderFactory;
 import me.blvckbytes.bblibgui.*;
 import me.blvckbytes.bblibgui.param.MultipleChoiceParam;
 import me.blvckbytes.bblibgui.param.SingleChoiceParam;
@@ -45,11 +46,12 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
   public MultipleChoiceGui(
     @AutoInject APlugin plugin,
     @AutoInject SingleChoiceGui singleChoiceGui,
-    @AutoInject IFakeItemCommunicator fakeItemCommunicator
+    @AutoInject IFakeItemCommunicator fakeItemCommunicator,
+    @AutoInject IItemBuilderFactory builderFactory
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       ConfigValue.immediate(i.getArg().getTitle())
-    ), plugin, fakeItemCommunicator);
+    ), plugin, fakeItemCommunicator, builderFactory);
 
     this.playerChoices = new HashMap<>();
     this.tookAction = new HashSet<>();

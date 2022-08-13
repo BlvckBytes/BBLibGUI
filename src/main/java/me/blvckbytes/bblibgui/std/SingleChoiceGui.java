@@ -1,6 +1,7 @@
 package me.blvckbytes.bblibgui.std;
 
 import me.blvckbytes.bblibconfig.ConfigValue;
+import me.blvckbytes.bblibconfig.IItemBuilderFactory;
 import me.blvckbytes.bblibdi.AutoConstruct;
 import me.blvckbytes.bblibdi.AutoInject;
 import me.blvckbytes.bblibgui.*;
@@ -47,11 +48,12 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
   public SingleChoiceGui(
     @AutoInject APlugin plugin,
     @AutoInject AnvilSearchGui searchGui,
-    @AutoInject IFakeItemCommunicator fakeItemCommunicator
+    @AutoInject IFakeItemCommunicator fakeItemCommunicator,
+    @AutoInject IItemBuilderFactory builderFactory
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       ConfigValue.immediate(i.getArg().getTitle())
-    ), plugin, fakeItemCommunicator);
+    ), plugin, fakeItemCommunicator, builderFactory);
 
     this.haveChosen = new HashMap<>();
     this.searchGui = searchGui;

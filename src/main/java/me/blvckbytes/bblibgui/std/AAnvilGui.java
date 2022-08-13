@@ -1,6 +1,7 @@
 package me.blvckbytes.bblibgui.std;
 
 import me.blvckbytes.bblibconfig.ConfigValue;
+import me.blvckbytes.bblibconfig.IItemBuilderFactory;
 import me.blvckbytes.bblibgui.AGui;
 import me.blvckbytes.bblibgui.GuiInstance;
 import me.blvckbytes.bblibgui.StdGuiItem;
@@ -49,11 +50,12 @@ public abstract class AAnvilGui<T extends IAnvilGuiParam<T>> extends AGui<T> imp
     IPacketInterceptor packetInterceptor,
     MCReflect refl,
     ILogger logger,
-    IFakeItemCommunicator fakeItemCommunicator
+    IFakeItemCommunicator fakeItemCommunicator,
+    IItemBuilderFactory builderFactory
   ) {
     super(1, "", i -> (
       ConfigValue.immediate(i.getArg().getTitle())
-    ), InventoryType.ANVIL, plugin, fakeItemCommunicator);
+    ), InventoryType.ANVIL, plugin, fakeItemCommunicator, builderFactory);
 
     this.madeSelection = new HashSet<>();
     this.refl = refl;

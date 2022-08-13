@@ -3,6 +3,7 @@ package me.blvckbytes.bblibgui;
 import lombok.Getter;
 import lombok.Setter;
 import me.blvckbytes.bblibconfig.ConfigValue;
+import me.blvckbytes.bblibconfig.IItemBuilderFactory;
 import me.blvckbytes.bblibgui.listener.InventoryManipulationEvent;
 import me.blvckbytes.bblibreflect.IFakeItemCommunicator;
 import me.blvckbytes.bblibutil.APlugin;
@@ -55,6 +56,7 @@ public class GuiInstance<T> {
   private final Map<Integer, List<Runnable>> redrawListeners;
 
   private final IFakeItemCommunicator fakeItemCommunicator;
+  private final IItemBuilderFactory builderFactory;
   private final APlugin plugin;
   private final int instanceId;
 
@@ -87,13 +89,15 @@ public class GuiInstance<T> {
    * @param arg Argument of this instance
    * @param plugin JavaPlugin ref
    * @param fakeItemCommunicator FakeItemCommunicator ref
+   * @param builderFactory IItemBuilderFactory ref
    */
   public GuiInstance(
     Player viewer,
     AGui<T> template,
     T arg,
     APlugin plugin,
-    IFakeItemCommunicator fakeItemCommunicator
+    IFakeItemCommunicator fakeItemCommunicator,
+    IItemBuilderFactory builderFactory
   ) {
     this.instanceId = instanceCounter++;
     this.viewer = viewer;
@@ -101,6 +105,7 @@ public class GuiInstance<T> {
     this.arg = arg;
     this.plugin = plugin;
     this.fakeItemCommunicator = fakeItemCommunicator;
+    this.builderFactory = builderFactory;
 
     this.fixedItems = new HashMap<>();
     this.redrawListeners = new HashMap<>();
@@ -660,9 +665,9 @@ public class GuiInstance<T> {
     resize(layout.getRows());
 
     if (layout.getFill() != null)
-      addFill(layout.getFill().asItem(null).build());
+      addFill(layout.getFill().asItem(builderFactory, null).build());
     else if (layout.getBorder() != null)
-      addBorder(layout.getBorder().asItem(null).build());
+      addBorder(layout.getBorder().asItem(builderFactory, null).build());
 
     setPageSlots(template.slotExprToSlots(layout.getPaginated()));
   }

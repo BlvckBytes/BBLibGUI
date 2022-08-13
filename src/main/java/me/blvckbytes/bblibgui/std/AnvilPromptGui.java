@@ -1,7 +1,7 @@
 package me.blvckbytes.bblibgui.std;
 
 import me.blvckbytes.bblibconfig.ConfigValue;
-import me.blvckbytes.bblibconfig.ItemStackBuilder;
+import me.blvckbytes.bblibconfig.IItemBuilderFactory;
 import me.blvckbytes.bblibgui.*;
 import me.blvckbytes.bblibgui.param.AnvilPromptParam;
 import me.blvckbytes.bblibreflect.IFakeItemCommunicator;
@@ -42,6 +42,7 @@ import java.util.Map;
 @AutoConstruct
 public class AnvilPromptGui extends AAnvilGui<AnvilPromptParam> {
 
+  private final IItemBuilderFactory builderFactory;
   private final Map<GuiInstance<?>, Triple<Boolean, Object, ItemStack>> inputs;
 
   public AnvilPromptGui(
@@ -49,10 +50,13 @@ public class AnvilPromptGui extends AAnvilGui<AnvilPromptParam> {
     @AutoInject IPacketInterceptor packetInterceptor,
     @AutoInject MCReflect refl,
     @AutoInject ILogger logger,
-    @AutoInject IFakeItemCommunicator fakeItemCommunicator
+    @AutoInject IFakeItemCommunicator fakeItemCommunicator,
+    @AutoInject IItemBuilderFactory builderFactory
   ) {
-    super(plugin, packetInterceptor, refl, logger, fakeItemCommunicator);
+    super(plugin, packetInterceptor, refl, logger, fakeItemCommunicator, builderFactory);
+
     this.inputs = new HashMap<>();
+    this.builderFactory = builderFactory;
   }
 
   @Override
@@ -87,7 +91,7 @@ public class AnvilPromptGui extends AAnvilGui<AnvilPromptParam> {
 
       // Set the previously entered text as the placeholder's name
       // to resume where typing has been left off
-      return new ItemStackBuilder(placeholder, placeholder.getAmount())
+      return builderFactory.create(placeholder, placeholder.getAmount())
         .withName(ConfigValue.immediate(inp))
         .build();
     }, null, null);

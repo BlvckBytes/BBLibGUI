@@ -1,6 +1,7 @@
 package me.blvckbytes.bblibgui.std;
 
 import me.blvckbytes.bblibconfig.ConfigValue;
+import me.blvckbytes.bblibconfig.IItemBuilderFactory;
 import me.blvckbytes.bblibgui.*;
 import me.blvckbytes.bblibgui.param.YesNoParam;
 import me.blvckbytes.bblibreflect.IFakeItemCommunicator;
@@ -42,11 +43,12 @@ public class YesNoGui extends AGui<YesNoParam> {
 
   public YesNoGui(
     @AutoInject APlugin plugin,
-    @AutoInject IFakeItemCommunicator fakeItemCommunicator
+    @AutoInject IFakeItemCommunicator fakeItemCommunicator,
+    @AutoInject IItemBuilderFactory builderFactory
   ) {
     super(3, "", i -> (
       ConfigValue.immediate(i.getArg().getType())
-    ), plugin, fakeItemCommunicator);
+    ), plugin, fakeItemCommunicator, builderFactory);
 
     this.madeSelection = new HashSet<>();
   }

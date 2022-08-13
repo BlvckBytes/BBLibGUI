@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import me.blvckbytes.bblibconfig.ConfigValue;
+import me.blvckbytes.bblibconfig.IItemBuilderFactory;
 import me.blvckbytes.bblibgui.listener.InventoryManipulationEvent;
 import me.blvckbytes.bblibreflect.IFakeItemCommunicator;
 import me.blvckbytes.bblibutil.APlugin;
@@ -48,6 +49,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
   protected final APlugin plugin;
 
   private final IFakeItemCommunicator fakeItemCommunicator;
+  protected final IItemBuilderFactory builderFactory;
 
   // Mapping players to their active instances
   @Getter
@@ -77,15 +79,17 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * @param title Title supplier for the inventory
    * @param plugin Plugin ref
    * @param fakeItemCommunicator IFakeItemCommunicator ref
+   * @param builderFactory IItemBuilderFactory ref
    */
   protected AGui(
     int rows,
     String pageSlotExpr,
     Function<GuiInstance<T>, ConfigValue> title,
     APlugin plugin,
-    IFakeItemCommunicator fakeItemCommunicator
+    IFakeItemCommunicator fakeItemCommunicator,
+    IItemBuilderFactory builderFactory
   ) {
-    this(rows, pageSlotExpr, title, InventoryType.CHEST, plugin, fakeItemCommunicator);
+    this(rows, pageSlotExpr, title, InventoryType.CHEST, plugin, fakeItemCommunicator, builderFactory);
   }
 
   /**
@@ -95,6 +99,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * @param title Title supplier for the inventory
    * @param plugin Plugin ref
    * @param fakeItemCommunicator IFakeItemCommunicator ref
+   * @param builderFactory IItemBuilderFactory ref
    */
   protected AGui(
     int rows,
@@ -102,13 +107,15 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     Function<GuiInstance<T>, ConfigValue> title,
     InventoryType type,
     APlugin plugin,
-    IFakeItemCommunicator fakeItemCommunicator
+    IFakeItemCommunicator fakeItemCommunicator,
+    IItemBuilderFactory builderFactory
   ) {
     this.rows = rows;
     this.title = title;
     this.plugin = plugin;
     this.type = type;
     this.fakeItemCommunicator = fakeItemCommunicator;
+    this.builderFactory = builderFactory;
 
     this.pageSlots = slotExprToSlots(pageSlotExpr);
     this.activeInstances = new HashMap<>();
@@ -128,7 +135,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     Player viewer,
     T arg
   ) {
-    GuiInstance<T> inst = new GuiInstance<>(viewer, this, arg, plugin, fakeItemCommunicator);
+    GuiInstance<T> inst = new GuiInstance<>(viewer, this, arg, plugin, fakeItemCommunicator, builderFactory);
     if (!opening(inst))
       return Optional.empty();
     return Optional.of(inst);
