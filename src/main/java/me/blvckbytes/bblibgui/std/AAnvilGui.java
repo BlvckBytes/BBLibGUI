@@ -8,13 +8,13 @@ import me.blvckbytes.bblibgui.StdGuiItem;
 import me.blvckbytes.bblibgui.param.IAnvilGuiParam;
 import me.blvckbytes.bblibreflect.*;
 import me.blvckbytes.bblibreflect.communicator.SetSlotCommunicator;
+import me.blvckbytes.bblibreflect.handle.AFieldHandle;
 import me.blvckbytes.bblibutil.APlugin;
 import me.blvckbytes.bblibutil.logger.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 
-import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -46,7 +46,7 @@ public abstract class AAnvilGui<T extends IAnvilGuiParam<T>> extends AGui<T> imp
   protected final Set<Player> madeSelection;
 
   private final Class<?> C_PO_ITEM_NAME;
-  private final Field F_PO_ITEM_NAME__NAME;
+  private final AFieldHandle F_PO_ITEM_NAME__NAME;
 
   protected AAnvilGui(
     APlugin plugin,
