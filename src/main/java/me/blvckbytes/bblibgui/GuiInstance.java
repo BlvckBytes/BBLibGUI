@@ -5,7 +5,9 @@ import lombok.Setter;
 import me.blvckbytes.bblibconfig.ConfigValue;
 import me.blvckbytes.bblibconfig.IItemBuilderFactory;
 import me.blvckbytes.bblibgui.listener.InventoryManipulationEvent;
-import me.blvckbytes.bblibreflect.IFakeItemCommunicator;
+import me.blvckbytes.bblibreflect.ICustomizableViewer;
+import me.blvckbytes.bblibreflect.communicator.SetSlotCommunicator;
+import me.blvckbytes.bblibreflect.communicator.parameter.SetSlotParameter;
 import me.blvckbytes.bblibutil.APlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -55,7 +57,7 @@ public class GuiInstance<T> {
   // Redraw listeners per slot
   private final Map<Integer, List<Runnable>> redrawListeners;
 
-  private final IFakeItemCommunicator fakeItemCommunicator;
+  private final SetSlotCommunicator slotCommunicator;
   private final IItemBuilderFactory builderFactory;
   private final APlugin plugin;
   private final int instanceId;
@@ -77,6 +79,7 @@ public class GuiInstance<T> {
   @Getter private final AGui<T> template;
   @Getter private final AtomicBoolean animating;
   @Getter private final Player viewer;
+  @Getter private final ICustomizableViewer customizableViewer;
   @Getter private Inventory inv;
   @Getter private final T arg;
   @Getter private String currTitle;
@@ -88,23 +91,25 @@ public class GuiInstance<T> {
    * @param template Template instance
    * @param arg Argument of this instance
    * @param plugin JavaPlugin ref
-   * @param fakeItemCommunicator FakeItemCommunicator ref
+   * @param slotCommunicator SetSlotCommunicator ref
    * @param builderFactory IItemBuilderFactory ref
    */
   public GuiInstance(
     Player viewer,
+    ICustomizableViewer customizableViewer,
     AGui<T> template,
     T arg,
     APlugin plugin,
-    IFakeItemCommunicator fakeItemCommunicator,
+    SetSlotCommunicator slotCommunicator,
     IItemBuilderFactory builderFactory
   ) {
     this.instanceId = instanceCounter++;
     this.viewer = viewer;
+    this.customizableViewer = customizableViewer;
     this.template = template;
     this.arg = arg;
     this.plugin = plugin;
-    this.fakeItemCommunicator = fakeItemCommunicator;
+    this.slotCommunicator = slotCommunicator;
     this.builderFactory = builderFactory;
 
     this.fixedItems = new HashMap<>();
@@ -665,9 +670,9 @@ public class GuiInstance<T> {
     resize(layout.getRows());
 
     if (layout.getFill() != null)
-      addFill(layout.getFill().asItem(builderFactory, null).build());
+      addFill(layout.getFill().asItem(builderFactory).build());
     else if (layout.getBorder() != null)
-      addBorder(layout.getBorder().asItem(builderFactory, null).build());
+      addBorder(layout.getBorder().asItem(builderFactory).build());
 
     setPageSlots(template.slotExprToSlots(layout.getPaginated()));
   }
@@ -732,7 +737,7 @@ public class GuiInstance<T> {
       // Weird bug with not being able to set items in anvils on lower versions
       // Force the item using a fake item
       if (inv.getType() == InventoryType.ANVIL)
-        fakeItemCommunicator.setFakeTopInventorySlot(viewer, item, slot);
+        slotCommunicator.sendParameterized(customizableViewer, new SetSlotParameter(item, slot, true));
     }
   }
 

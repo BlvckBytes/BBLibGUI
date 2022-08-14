@@ -2,15 +2,16 @@ package me.blvckbytes.bblibgui.std;
 
 import me.blvckbytes.bblibconfig.ConfigValue;
 import me.blvckbytes.bblibconfig.IItemBuilderFactory;
+import me.blvckbytes.bblibdi.AutoConstruct;
+import me.blvckbytes.bblibdi.AutoInject;
 import me.blvckbytes.bblibgui.*;
 import me.blvckbytes.bblibgui.listener.InventoryManipulationEvent;
 import me.blvckbytes.bblibgui.param.SingleChoiceParam;
-import me.blvckbytes.bblibreflect.IFakeItemCommunicator;
 import me.blvckbytes.bblibreflect.IPacketInterceptor;
-import me.blvckbytes.bblibreflect.MCReflect;
+import me.blvckbytes.bblibreflect.IReflectionHelper;
+import me.blvckbytes.bblibreflect.communicator.SetSlotCommunicator;
+import me.blvckbytes.bblibreflect.communicator.parameter.SetSlotParameter;
 import me.blvckbytes.bblibutil.APlugin;
-import me.blvckbytes.bblibdi.AutoConstruct;
-import me.blvckbytes.bblibdi.AutoInject;
 import me.blvckbytes.bblibutil.IEnum;
 import me.blvckbytes.bblibutil.Tuple;
 import me.blvckbytes.bblibutil.logger.ILogger;
@@ -55,18 +56,16 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
 
   private final Map<GuiInstance<?>, Tuple<String, @Nullable IFilterEnum<?>>> filterState;
   private final Map<GuiInstance<?>, Tuple<Long, Runnable>> typingActions;
-  private final IFakeItemCommunicator fakeItem;
 
   public AnvilSearchGui(
     @AutoInject APlugin plugin,
-    @AutoInject IPacketInterceptor packetInterceptor,
-    @AutoInject MCReflect refl,
     @AutoInject ILogger logger,
-    @AutoInject IFakeItemCommunicator fakeItem,
+    @AutoInject IReflectionHelper reflection,
+    @AutoInject SetSlotCommunicator slotCommunicator,
+    @AutoInject IPacketInterceptor packetInterceptor,
     @AutoInject IItemBuilderFactory builderFactory
-  ) {
-    super(plugin, packetInterceptor, refl, logger, fakeItem, builderFactory);
-    this.fakeItem = fakeItem;
+  ) throws Exception {
+    super(plugin, logger, reflection, slotCommunicator, packetInterceptor, builderFactory);
 
     this.filterState = new HashMap<>();
     this.typingActions = new HashMap<>();
@@ -113,9 +112,11 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
 
     Map<String, String> slots = layout != null ? layout.getSlots() : new HashMap<>();
 
+    // TODO: Add build() to ItemStackSection and require builderFactory too, don't forget viewer customizations, apply on all places within gui-lib
+
     // Set the background or fill in the hotbar
     if (layout != null && (layout.getFill() != null || layout.getBorder() != null))
-      inst.addSpacer(SHIM_OFFS + "-" + (SHIM_OFFS + 8), layout.getFill().asItem(builderFactory, null).build());
+      inst.addSpacer(SHIM_OFFS + "-" + (SHIM_OFFS + 8), layout.getFill().asItem(builderFactory).build());
 
     // Call super after fill/border to allow for overriding fixed items
     super.opening(inst);
@@ -170,8 +171,8 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
       // Take off the offset again
       slot -= SHIM_OFFS;
 
-      fakeItem.setFakeInventorySlot(
-        inst.getViewer(), item, slot
+      slotCommunicator.sendParameterized(
+        inst.getCustomizableViewer(), new SetSlotParameter(item, slot, true)
       );
 
       return true;

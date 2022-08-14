@@ -2,7 +2,7 @@ package me.blvckbytes.bblibgui.listener;
 
 import me.blvckbytes.bblibdi.AutoConstruct;
 import me.blvckbytes.bblibdi.AutoInject;
-import me.blvckbytes.bblibreflect.MCReflect;
+import me.blvckbytes.bblibreflect.IReflectionHelper;
 import me.blvckbytes.bblibutil.APlugin;
 import me.blvckbytes.bblibutil.Triple;
 import me.blvckbytes.bblibutil.Tuple;
@@ -58,15 +58,15 @@ public class InventoryListener implements Listener {
     }
   }
 
-  private final MCReflect refl;
   private final APlugin plugin;
+  private final IReflectionHelper reflection;
 
   public InventoryListener(
-    @AutoInject MCReflect refl,
-    @AutoInject APlugin plugin
+    @AutoInject APlugin plugin,
+    @AutoInject IReflectionHelper reflection
   ) {
-    this.refl = refl;
     this.plugin = plugin;
+    this.reflection = reflection;
   }
 
   @EventHandler
@@ -569,7 +569,7 @@ public class InventoryListener implements Listener {
         slots.add(0);
 
       // Is a fuel source and can only go into 1
-      else if (refl.getBurnTime(item.getType()).isPresent())
+      else if (reflection.getBurnTime(item.getType()).isPresent())
         slots.add(1);
     }
 

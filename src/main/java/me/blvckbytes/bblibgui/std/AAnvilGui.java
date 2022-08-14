@@ -7,12 +7,14 @@ import me.blvckbytes.bblibgui.GuiInstance;
 import me.blvckbytes.bblibgui.StdGuiItem;
 import me.blvckbytes.bblibgui.param.IAnvilGuiParam;
 import me.blvckbytes.bblibreflect.*;
+import me.blvckbytes.bblibreflect.communicator.SetSlotCommunicator;
 import me.blvckbytes.bblibutil.APlugin;
 import me.blvckbytes.bblibutil.logger.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 
+import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -42,24 +44,26 @@ public abstract class AAnvilGui<T extends IAnvilGuiParam<T>> extends AGui<T> imp
 
   // Whether the player has made a selection yet
   protected final Set<Player> madeSelection;
-  protected final MCReflect refl;
-  protected final ILogger logger;
+
+  private final Class<?> C_PO_ITEM_NAME;
+  private final Field F_PO_ITEM_NAME__NAME;
 
   protected AAnvilGui(
     APlugin plugin,
-    IPacketInterceptor packetInterceptor,
-    MCReflect refl,
     ILogger logger,
-    IFakeItemCommunicator fakeItemCommunicator,
+    IReflectionHelper reflection,
+    SetSlotCommunicator slotCommunicator,
+    IPacketInterceptor packetInterceptor,
     IItemBuilderFactory builderFactory
-  ) {
+  ) throws Exception {
     super(1, "", i -> (
       ConfigValue.immediate(i.getArg().getTitle())
-    ), InventoryType.ANVIL, plugin, fakeItemCommunicator, builderFactory);
+    ), InventoryType.ANVIL, plugin, logger, reflection, slotCommunicator, packetInterceptor, builderFactory);
 
     this.madeSelection = new HashSet<>();
-    this.refl = refl;
-    this.logger = logger;
+
+    C_PO_ITEM_NAME = requireClass(RClass.PACKET_I_ITEM_NAME);
+    F_PO_ITEM_NAME__NAME = requireScalarField(C_PO_ITEM_NAME, String.class, 0, false, false, null);
 
     packetInterceptor.register(this, ModificationPriority.LOW);
   }
@@ -109,11 +113,17 @@ public abstract class AAnvilGui<T extends IAnvilGuiParam<T>> extends AGui<T> imp
   //=========================================================================//
 
   @Override
-  public Object modifyIncoming(UUID sender, PacketSource ps, Object incoming) {
-    Player p = Bukkit.getPlayer(sender);
+  public Object modifyIncoming(IPacketReceiver receiver, Object incoming) {
+    UUID u = receiver.getUuid();
+
+    // Not a player
+    if (u == null)
+      return incoming;
+
+    Player p = Bukkit.getPlayer(u);
 
     // Not the target packet
-    if (p == null || !refl.getReflClass(ReflClass.PACKET_I_ITEM_NAME).isInstance(incoming))
+    if (p == null || !C_PO_ITEM_NAME.isInstance(incoming))
       return incoming;
 
     GuiInstance<T> inst = getActiveInstances().get(p);
@@ -122,7 +132,7 @@ public abstract class AAnvilGui<T extends IAnvilGuiParam<T>> extends AGui<T> imp
 
     try {
       // Synchronize from async packet thread
-      String text = refl.getFieldByType(incoming, String.class, 0).trim();
+      String text = ((String) F_PO_ITEM_NAME__NAME.get(incoming)).trim();
       plugin.runTask(() -> onTyping(inst, text));
     } catch (Exception e) {
       logger.logError(e);
@@ -133,7 +143,7 @@ public abstract class AAnvilGui<T extends IAnvilGuiParam<T>> extends AGui<T> imp
   }
 
   @Override
-  public Object modifyOutgoing(UUID receiver, Object nm, Object outgoing) {
+  public Object modifyOutgoing(IPacketReceiver receiver, Object outgoing) {
     return outgoing;
   }
 }

@@ -6,8 +6,11 @@ import me.blvckbytes.bblibdi.AutoConstruct;
 import me.blvckbytes.bblibdi.AutoInject;
 import me.blvckbytes.bblibgui.*;
 import me.blvckbytes.bblibgui.param.SingleChoiceParam;
-import me.blvckbytes.bblibreflect.IFakeItemCommunicator;
+import me.blvckbytes.bblibreflect.IPacketInterceptor;
+import me.blvckbytes.bblibreflect.IReflectionHelper;
+import me.blvckbytes.bblibreflect.communicator.SetSlotCommunicator;
 import me.blvckbytes.bblibutil.APlugin;
+import me.blvckbytes.bblibutil.logger.ILogger;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -48,12 +51,15 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
   public SingleChoiceGui(
     @AutoInject APlugin plugin,
     @AutoInject AnvilSearchGui searchGui,
-    @AutoInject IFakeItemCommunicator fakeItemCommunicator,
+    @AutoInject ILogger logger,
+    @AutoInject IReflectionHelper reflection,
+    @AutoInject SetSlotCommunicator slotCommunicator,
+    @AutoInject IPacketInterceptor packetInterceptor,
     @AutoInject IItemBuilderFactory builderFactory
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       ConfigValue.immediate(i.getArg().getTitle())
-    ), plugin, fakeItemCommunicator, builderFactory);
+    ), plugin, logger, reflection, slotCommunicator, packetInterceptor, builderFactory);
 
     this.haveChosen = new HashMap<>();
     this.searchGui = searchGui;

@@ -2,14 +2,16 @@ package me.blvckbytes.bblibgui.std;
 
 import me.blvckbytes.bblibconfig.ConfigValue;
 import me.blvckbytes.bblibconfig.IItemBuilderFactory;
-import me.blvckbytes.bblibgui.*;
-import me.blvckbytes.bblibgui.param.AnvilPromptParam;
-import me.blvckbytes.bblibreflect.IFakeItemCommunicator;
-import me.blvckbytes.bblibreflect.IPacketInterceptor;
-import me.blvckbytes.bblibreflect.MCReflect;
-import me.blvckbytes.bblibutil.APlugin;
 import me.blvckbytes.bblibdi.AutoConstruct;
 import me.blvckbytes.bblibdi.AutoInject;
+import me.blvckbytes.bblibgui.GuiInstance;
+import me.blvckbytes.bblibgui.IStdGuiItemProvider;
+import me.blvckbytes.bblibgui.StdGuiItem;
+import me.blvckbytes.bblibgui.param.AnvilPromptParam;
+import me.blvckbytes.bblibreflect.IPacketInterceptor;
+import me.blvckbytes.bblibreflect.IReflectionHelper;
+import me.blvckbytes.bblibreflect.communicator.SetSlotCommunicator;
+import me.blvckbytes.bblibutil.APlugin;
 import me.blvckbytes.bblibutil.Triple;
 import me.blvckbytes.bblibutil.Tuple;
 import me.blvckbytes.bblibutil.logger.ILogger;
@@ -42,21 +44,18 @@ import java.util.Map;
 @AutoConstruct
 public class AnvilPromptGui extends AAnvilGui<AnvilPromptParam> {
 
-  private final IItemBuilderFactory builderFactory;
   private final Map<GuiInstance<?>, Triple<Boolean, Object, ItemStack>> inputs;
 
   public AnvilPromptGui(
     @AutoInject APlugin plugin,
-    @AutoInject IPacketInterceptor packetInterceptor,
-    @AutoInject MCReflect refl,
     @AutoInject ILogger logger,
-    @AutoInject IFakeItemCommunicator fakeItemCommunicator,
+    @AutoInject IReflectionHelper reflection,
+    @AutoInject SetSlotCommunicator slotCommunicator,
+    @AutoInject IPacketInterceptor packetInterceptor,
     @AutoInject IItemBuilderFactory builderFactory
-  ) {
-    super(plugin, packetInterceptor, refl, logger, fakeItemCommunicator, builderFactory);
-
+  ) throws Exception {
+    super(plugin, logger, reflection, slotCommunicator, packetInterceptor, builderFactory);
     this.inputs = new HashMap<>();
-    this.builderFactory = builderFactory;
   }
 
   @Override

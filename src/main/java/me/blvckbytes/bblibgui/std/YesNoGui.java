@@ -4,11 +4,14 @@ import me.blvckbytes.bblibconfig.ConfigValue;
 import me.blvckbytes.bblibconfig.IItemBuilderFactory;
 import me.blvckbytes.bblibgui.*;
 import me.blvckbytes.bblibgui.param.YesNoParam;
-import me.blvckbytes.bblibreflect.IFakeItemCommunicator;
+import me.blvckbytes.bblibreflect.IPacketInterceptor;
+import me.blvckbytes.bblibreflect.IReflectionHelper;
+import me.blvckbytes.bblibreflect.communicator.SetSlotCommunicator;
 import me.blvckbytes.bblibutil.APlugin;
 import me.blvckbytes.bblibdi.AutoConstruct;
 import me.blvckbytes.bblibdi.AutoInject;
 import me.blvckbytes.bblibutil.TriResult;
+import me.blvckbytes.bblibutil.logger.ILogger;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;
@@ -43,12 +46,15 @@ public class YesNoGui extends AGui<YesNoParam> {
 
   public YesNoGui(
     @AutoInject APlugin plugin,
-    @AutoInject IFakeItemCommunicator fakeItemCommunicator,
+    @AutoInject ILogger logger,
+    @AutoInject IReflectionHelper reflection,
+    @AutoInject SetSlotCommunicator slotCommunicator,
+    @AutoInject IPacketInterceptor packetInterceptor,
     @AutoInject IItemBuilderFactory builderFactory
   ) {
     super(3, "", i -> (
       ConfigValue.immediate(i.getArg().getType())
-    ), plugin, fakeItemCommunicator, builderFactory);
+    ), plugin, logger, reflection, slotCommunicator, packetInterceptor, builderFactory);
 
     this.madeSelection = new HashSet<>();
   }

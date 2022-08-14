@@ -2,14 +2,17 @@ package me.blvckbytes.bblibgui.std;
 
 import me.blvckbytes.bblibconfig.ConfigValue;
 import me.blvckbytes.bblibconfig.IItemBuilderFactory;
+import me.blvckbytes.bblibdi.AutoConstruct;
+import me.blvckbytes.bblibdi.AutoInject;
 import me.blvckbytes.bblibgui.*;
 import me.blvckbytes.bblibgui.param.MultipleChoiceParam;
 import me.blvckbytes.bblibgui.param.SingleChoiceParam;
-import me.blvckbytes.bblibreflect.IFakeItemCommunicator;
+import me.blvckbytes.bblibreflect.IPacketInterceptor;
+import me.blvckbytes.bblibreflect.IReflectionHelper;
+import me.blvckbytes.bblibreflect.communicator.SetSlotCommunicator;
 import me.blvckbytes.bblibutil.APlugin;
-import me.blvckbytes.bblibdi.AutoConstruct;
-import me.blvckbytes.bblibdi.AutoInject;
 import me.blvckbytes.bblibutil.Tuple;
+import me.blvckbytes.bblibutil.logger.ILogger;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
@@ -46,12 +49,15 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
   public MultipleChoiceGui(
     @AutoInject APlugin plugin,
     @AutoInject SingleChoiceGui singleChoiceGui,
-    @AutoInject IFakeItemCommunicator fakeItemCommunicator,
+    @AutoInject ILogger logger,
+    @AutoInject IReflectionHelper reflection,
+    @AutoInject SetSlotCommunicator slotCommunicator,
+    @AutoInject IPacketInterceptor packetInterceptor,
     @AutoInject IItemBuilderFactory builderFactory
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       ConfigValue.immediate(i.getArg().getTitle())
-    ), plugin, fakeItemCommunicator, builderFactory);
+    ), plugin, logger, reflection, slotCommunicator, packetInterceptor, builderFactory);
 
     this.playerChoices = new HashMap<>();
     this.tookAction = new HashSet<>();

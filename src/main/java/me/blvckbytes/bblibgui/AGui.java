@@ -5,10 +5,15 @@ import lombok.Getter;
 import lombok.Setter;
 import me.blvckbytes.bblibconfig.ConfigValue;
 import me.blvckbytes.bblibconfig.IItemBuilderFactory;
+import me.blvckbytes.bblibdi.AutoInjectLate;
 import me.blvckbytes.bblibgui.listener.InventoryManipulationEvent;
-import me.blvckbytes.bblibreflect.IFakeItemCommunicator;
+import me.blvckbytes.bblibreflect.AReflectedAccessor;
+import me.blvckbytes.bblibreflect.IPacketInterceptor;
+import me.blvckbytes.bblibreflect.IReflectionHelper;
+import me.blvckbytes.bblibreflect.communicator.SetSlotCommunicator;
 import me.blvckbytes.bblibutil.APlugin;
 import me.blvckbytes.bblibdi.IAutoConstructed;
+import me.blvckbytes.bblibutil.logger.ILogger;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -44,11 +49,11 @@ import java.util.stream.IntStream;
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-public abstract class AGui<T> implements IAutoConstructed, Listener {
+public abstract class AGui<T> extends AReflectedAccessor implements IAutoConstructed, Listener {
 
   protected final APlugin plugin;
-
-  private final IFakeItemCommunicator fakeItemCommunicator;
+  protected final SetSlotCommunicator slotCommunicator;
+  protected final IPacketInterceptor packetInterceptor;
   protected final IItemBuilderFactory builderFactory;
 
   // Mapping players to their active instances
@@ -78,18 +83,19 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * @param pageSlotExpr Which slots to use for dynamic paging
    * @param title Title supplier for the inventory
    * @param plugin Plugin ref
-   * @param fakeItemCommunicator IFakeItemCommunicator ref
-   * @param builderFactory IItemBuilderFactory ref
    */
   protected AGui(
     int rows,
     String pageSlotExpr,
     Function<GuiInstance<T>, ConfigValue> title,
     APlugin plugin,
-    IFakeItemCommunicator fakeItemCommunicator,
+    ILogger logger,
+    IReflectionHelper reflection,
+    SetSlotCommunicator slotCommunicator,
+    IPacketInterceptor packetInterceptor,
     IItemBuilderFactory builderFactory
   ) {
-    this(rows, pageSlotExpr, title, InventoryType.CHEST, plugin, fakeItemCommunicator, builderFactory);
+    this(rows, pageSlotExpr, title, InventoryType.CHEST, plugin, logger, reflection, slotCommunicator, packetInterceptor, builderFactory);
   }
 
   /**
@@ -98,8 +104,6 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * @param pageSlotExpr Which slots to use for dynamic paging
    * @param title Title supplier for the inventory
    * @param plugin Plugin ref
-   * @param fakeItemCommunicator IFakeItemCommunicator ref
-   * @param builderFactory IItemBuilderFactory ref
    */
   protected AGui(
     int rows,
@@ -107,15 +111,22 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     Function<GuiInstance<T>, ConfigValue> title,
     InventoryType type,
     APlugin plugin,
-    IFakeItemCommunicator fakeItemCommunicator,
+    ILogger logger,
+    IReflectionHelper reflection,
+    SetSlotCommunicator slotCommunicator,
+    IPacketInterceptor packetInterceptor,
     IItemBuilderFactory builderFactory
   ) {
+    super(logger, reflection);
+
+    this.slotCommunicator = slotCommunicator;
+    this.packetInterceptor = packetInterceptor;
+    this.builderFactory = builderFactory;
+
     this.rows = rows;
     this.title = title;
     this.plugin = plugin;
     this.type = type;
-    this.fakeItemCommunicator = fakeItemCommunicator;
-    this.builderFactory = builderFactory;
 
     this.pageSlots = slotExprToSlots(pageSlotExpr);
     this.activeInstances = new HashMap<>();
@@ -135,9 +146,14 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     Player viewer,
     T arg
   ) {
-    GuiInstance<T> inst = new GuiInstance<>(viewer, this, arg, plugin, fakeItemCommunicator, builderFactory);
+    GuiInstance<T> inst = new GuiInstance<>(
+      viewer, packetInterceptor.getPlayerAsViewer(viewer),
+      this, arg, plugin, slotCommunicator, builderFactory
+    );
+
     if (!opening(inst))
       return Optional.empty();
+
     return Optional.of(inst);
   }
 
