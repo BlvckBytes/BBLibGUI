@@ -5,9 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import me.blvckbytes.bblibconfig.ConfigValue;
 import me.blvckbytes.bblibconfig.IItemBuilderFactory;
-import me.blvckbytes.bblibdi.AutoInjectLate;
 import me.blvckbytes.bblibgui.listener.InventoryManipulationEvent;
-import me.blvckbytes.bblibreflect.AReflectedAccessor;
 import me.blvckbytes.bblibreflect.IPacketInterceptor;
 import me.blvckbytes.bblibreflect.IReflectionHelper;
 import me.blvckbytes.bblibreflect.communicator.SetSlotCommunicator;
@@ -49,12 +47,14 @@ import java.util.stream.IntStream;
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-public abstract class AGui<T> extends AReflectedAccessor implements IAutoConstructed, Listener {
+public abstract class AGui<T> implements IAutoConstructed, Listener {
 
   protected final APlugin plugin;
   protected final SetSlotCommunicator slotCommunicator;
   protected final IPacketInterceptor packetInterceptor;
   protected final IItemBuilderFactory builderFactory;
+  protected ILogger logger;
+  protected IReflectionHelper reflection;
 
   // Mapping players to their active instances
   @Getter
@@ -117,8 +117,8 @@ public abstract class AGui<T> extends AReflectedAccessor implements IAutoConstru
     IPacketInterceptor packetInterceptor,
     IItemBuilderFactory builderFactory
   ) {
-    super(logger, reflection);
-
+    this.logger = logger;
+    this.reflection = reflection;
     this.slotCommunicator = slotCommunicator;
     this.packetInterceptor = packetInterceptor;
     this.builderFactory = builderFactory;

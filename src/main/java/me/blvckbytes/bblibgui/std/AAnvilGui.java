@@ -8,7 +8,8 @@ import me.blvckbytes.bblibgui.StdGuiItem;
 import me.blvckbytes.bblibgui.param.IAnvilGuiParam;
 import me.blvckbytes.bblibreflect.*;
 import me.blvckbytes.bblibreflect.communicator.SetSlotCommunicator;
-import me.blvckbytes.bblibreflect.handle.AFieldHandle;
+import me.blvckbytes.bblibreflect.handle.ClassHandle;
+import me.blvckbytes.bblibreflect.handle.FieldHandle;
 import me.blvckbytes.bblibutil.APlugin;
 import me.blvckbytes.bblibutil.logger.ILogger;
 import org.bukkit.Bukkit;
@@ -45,8 +46,8 @@ public abstract class AAnvilGui<T extends IAnvilGuiParam<T>> extends AGui<T> imp
   // Whether the player has made a selection yet
   protected final Set<Player> madeSelection;
 
-  private final Class<?> C_PO_ITEM_NAME;
-  private final AFieldHandle F_PO_ITEM_NAME__NAME;
+  private final ClassHandle C_PO_ITEM_NAME;
+  private final FieldHandle F_PO_ITEM_NAME__NAME;
 
   protected AAnvilGui(
     APlugin plugin,
@@ -62,8 +63,9 @@ public abstract class AAnvilGui<T extends IAnvilGuiParam<T>> extends AGui<T> imp
 
     this.madeSelection = new HashSet<>();
 
-    C_PO_ITEM_NAME = requireClass(RClass.PACKET_I_ITEM_NAME);
-    F_PO_ITEM_NAME__NAME = requireScalarField(C_PO_ITEM_NAME, String.class, 0, false, false, null);
+    C_PO_ITEM_NAME = reflection.getClass(RClass.PACKET_I_ITEM_NAME);
+
+    F_PO_ITEM_NAME__NAME = C_PO_ITEM_NAME.locateField().withType(String.class).required();
 
     packetInterceptor.register(this, ModificationPriority.LOW);
   }
@@ -123,7 +125,7 @@ public abstract class AAnvilGui<T extends IAnvilGuiParam<T>> extends AGui<T> imp
     Player p = Bukkit.getPlayer(u);
 
     // Not the target packet
-    if (p == null || !C_PO_ITEM_NAME.isInstance(incoming))
+    if (p == null || !C_PO_ITEM_NAME.get().isInstance(incoming))
       return incoming;
 
     GuiInstance<T> inst = getActiveInstances().get(p);
