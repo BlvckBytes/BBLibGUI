@@ -50,7 +50,6 @@ import java.util.stream.IntStream;
 public abstract class AGui<T> implements IAutoConstructed, Listener {
 
   protected final APlugin plugin;
-  protected final SetSlotCommunicator slotCommunicator;
   protected final IPacketInterceptor packetInterceptor;
   protected final IItemBuilderFactory builderFactory;
   protected ILogger logger;
@@ -95,7 +94,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     IPacketInterceptor packetInterceptor,
     IItemBuilderFactory builderFactory
   ) {
-    this(rows, pageSlotExpr, title, InventoryType.CHEST, plugin, logger, reflection, slotCommunicator, packetInterceptor, builderFactory);
+    this(rows, pageSlotExpr, title, InventoryType.CHEST, plugin, logger, reflection, packetInterceptor, builderFactory);
   }
 
   /**
@@ -113,13 +112,11 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     APlugin plugin,
     ILogger logger,
     IReflectionHelper reflection,
-    SetSlotCommunicator slotCommunicator,
     IPacketInterceptor packetInterceptor,
     IItemBuilderFactory builderFactory
   ) {
     this.logger = logger;
     this.reflection = reflection;
-    this.slotCommunicator = slotCommunicator;
     this.packetInterceptor = packetInterceptor;
     this.builderFactory = builderFactory;
 
@@ -147,8 +144,8 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     T arg
   ) {
     GuiInstance<T> inst = new GuiInstance<>(
-      viewer, packetInterceptor.getPlayerAsViewer(viewer),
-      this, arg, plugin, slotCommunicator, builderFactory
+      viewer, this, arg, plugin,
+      packetInterceptor.getPacketCommunicatorRegistry(), builderFactory
     );
 
     if (!opening(inst))

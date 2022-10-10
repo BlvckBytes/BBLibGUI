@@ -5,8 +5,7 @@ import lombok.Setter;
 import me.blvckbytes.bblibconfig.ConfigValue;
 import me.blvckbytes.bblibconfig.IItemBuilderFactory;
 import me.blvckbytes.bblibgui.listener.InventoryManipulationEvent;
-import me.blvckbytes.bblibreflect.ICustomizableViewer;
-import me.blvckbytes.bblibreflect.communicator.SetSlotCommunicator;
+import me.blvckbytes.bblibreflect.communicator.IPacketCommunicatorRegistry;
 import me.blvckbytes.bblibreflect.communicator.parameter.SetSlotParameter;
 import me.blvckbytes.bblibutil.APlugin;
 import org.bukkit.Bukkit;
@@ -57,7 +56,7 @@ public class GuiInstance<T> {
   // Redraw listeners per slot
   private final Map<Integer, List<Runnable>> redrawListeners;
 
-  private final SetSlotCommunicator slotCommunicator;
+  private final IPacketCommunicatorRegistry communicatorRegistry;
   private final IItemBuilderFactory builderFactory;
   private final APlugin plugin;
   private final int instanceId;
@@ -67,7 +66,6 @@ public class GuiInstance<T> {
 
   private int currPage;
   private GuiAnimation currAnimation;
-  private ItemStack spacer;
   private Runnable updatePagination;
 
   @Setter private Supplier<List<GuiItem>> pageContents;
@@ -76,10 +74,10 @@ public class GuiInstance<T> {
   @Setter private List<Integer> pageSlots;
   @Setter private BiFunction<Integer, ItemStack, Boolean> slotShim;
   @Getter private int rows;
+  @Getter private ItemStack spacer;
   @Getter private final AGui<T> template;
   @Getter private final AtomicBoolean animating;
   @Getter private final Player viewer;
-  @Getter private final ICustomizableViewer customizableViewer;
   @Getter private Inventory inv;
   @Getter private final T arg;
   @Getter private String currTitle;
@@ -91,25 +89,23 @@ public class GuiInstance<T> {
    * @param template Template instance
    * @param arg Argument of this instance
    * @param plugin JavaPlugin ref
-   * @param slotCommunicator SetSlotCommunicator ref
+   * @param communicatorRegistry IPacketCommunicatorRegistry ref
    * @param builderFactory IItemBuilderFactory ref
    */
   public GuiInstance(
     Player viewer,
-    ICustomizableViewer customizableViewer,
     AGui<T> template,
     T arg,
     APlugin plugin,
-    SetSlotCommunicator slotCommunicator,
+    IPacketCommunicatorRegistry communicatorRegistry,
     IItemBuilderFactory builderFactory
   ) {
     this.instanceId = instanceCounter++;
     this.viewer = viewer;
-    this.customizableViewer = customizableViewer;
     this.template = template;
     this.arg = arg;
     this.plugin = plugin;
-    this.slotCommunicator = slotCommunicator;
+    this.communicatorRegistry = communicatorRegistry;
     this.builderFactory = builderFactory;
 
     this.fixedItems = new HashMap<>();
@@ -315,6 +311,23 @@ public class GuiInstance<T> {
   ) {
     for (int slotNumber : template.slotExprToSlots(slotExpr))
       fixedItems.put(slotNumber, new GuiItem(s -> item.get(), onClick, updatePeriod));
+  }
+
+  /**
+   * Add a fixed item, which is an item that will always have the same position,
+   * no matter of the viewer's state
+   * @param slot Slot to set this item to
+   * @param item An item supplier
+   * @param onClick Action to run when this item has been clicked
+   * @param updatePeriod Item update period in ticks, null means never
+   */
+  public void fixedItem(
+    int slot,
+    Supplier<ItemStack> item,
+    @Nullable Consumer<InventoryManipulationEvent> onClick,
+    Integer updatePeriod
+  ) {
+    fixedItems.put(slot, new GuiItem(s -> item.get(), onClick, updatePeriod));
   }
 
   /**
@@ -678,6 +691,15 @@ public class GuiInstance<T> {
   }
 
   /**
+   * Set a slot within the inventory only clientside
+   * @param item Item to set
+   * @param slot Slot to set the item to
+   */
+  public void setClientSlot(ItemStack item, int slot) {
+    communicatorRegistry.sendToPlayer(new SetSlotParameter(item, null, slot, true), viewer, null);
+  }
+
+  /**
    * Play a given animation on the GUI and manage entering
    * and leaving the animation lock state
    * @param animation Animation to play
@@ -737,7 +759,7 @@ public class GuiInstance<T> {
       // Weird bug with not being able to set items in anvils on lower versions
       // Force the item using a fake item
       if (inv.getType() == InventoryType.ANVIL)
-        slotCommunicator.sendParameterized(customizableViewer, new SetSlotParameter(item, slot, true));
+        setClientSlot(item, slot);
     }
   }
 

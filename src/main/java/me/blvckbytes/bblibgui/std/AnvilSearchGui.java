@@ -9,8 +9,6 @@ import me.blvckbytes.bblibgui.listener.InventoryManipulationEvent;
 import me.blvckbytes.bblibgui.param.SingleChoiceParam;
 import me.blvckbytes.bblibreflect.IPacketInterceptor;
 import me.blvckbytes.bblibreflect.IReflectionHelper;
-import me.blvckbytes.bblibreflect.communicator.SetSlotCommunicator;
-import me.blvckbytes.bblibreflect.communicator.parameter.SetSlotParameter;
 import me.blvckbytes.bblibutil.APlugin;
 import me.blvckbytes.bblibutil.IEnum;
 import me.blvckbytes.bblibutil.Tuple;
@@ -61,11 +59,10 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
     @AutoInject APlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IReflectionHelper reflection,
-    @AutoInject SetSlotCommunicator slotCommunicator,
     @AutoInject IPacketInterceptor packetInterceptor,
     @AutoInject IItemBuilderFactory builderFactory
   ) throws Exception {
-    super(plugin, logger, reflection, slotCommunicator, packetInterceptor, builderFactory);
+    super(plugin, logger, reflection, packetInterceptor, builderFactory);
 
     this.filterState = new HashMap<>();
     this.typingActions = new HashMap<>();
@@ -171,10 +168,7 @@ public class AnvilSearchGui extends AAnvilGui<SingleChoiceParam> implements List
       // Take off the offset again
       slot -= SHIM_OFFS;
 
-      slotCommunicator.sendParameterized(
-        inst.getCustomizableViewer(), new SetSlotParameter(item, slot, true)
-      );
-
+      inst.setClientSlot(item, slot);
       return true;
     });
 

@@ -7,7 +7,6 @@ import me.blvckbytes.bblibgui.GuiInstance;
 import me.blvckbytes.bblibgui.StdGuiItem;
 import me.blvckbytes.bblibgui.param.IAnvilGuiParam;
 import me.blvckbytes.bblibreflect.*;
-import me.blvckbytes.bblibreflect.communicator.SetSlotCommunicator;
 import me.blvckbytes.bblibreflect.handle.ClassHandle;
 import me.blvckbytes.bblibreflect.handle.FieldHandle;
 import me.blvckbytes.bblibutil.APlugin;
@@ -53,13 +52,12 @@ public abstract class AAnvilGui<T extends IAnvilGuiParam<T>> extends AGui<T> imp
     APlugin plugin,
     ILogger logger,
     IReflectionHelper reflection,
-    SetSlotCommunicator slotCommunicator,
     IPacketInterceptor packetInterceptor,
     IItemBuilderFactory builderFactory
   ) throws Exception {
     super(1, "", i -> (
       ConfigValue.immediate(i.getArg().getTitle())
-    ), InventoryType.ANVIL, plugin, logger, reflection, slotCommunicator, packetInterceptor, builderFactory);
+    ), InventoryType.ANVIL, plugin, logger, reflection, packetInterceptor, builderFactory);
 
     this.madeSelection = new HashSet<>();
 

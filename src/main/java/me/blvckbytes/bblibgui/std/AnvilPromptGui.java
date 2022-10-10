@@ -10,7 +10,6 @@ import me.blvckbytes.bblibgui.StdGuiItem;
 import me.blvckbytes.bblibgui.param.AnvilPromptParam;
 import me.blvckbytes.bblibreflect.IPacketInterceptor;
 import me.blvckbytes.bblibreflect.IReflectionHelper;
-import me.blvckbytes.bblibreflect.communicator.SetSlotCommunicator;
 import me.blvckbytes.bblibutil.APlugin;
 import me.blvckbytes.bblibutil.Triple;
 import me.blvckbytes.bblibutil.Tuple;
@@ -50,11 +49,10 @@ public class AnvilPromptGui extends AAnvilGui<AnvilPromptParam> {
     @AutoInject APlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IReflectionHelper reflection,
-    @AutoInject SetSlotCommunicator slotCommunicator,
     @AutoInject IPacketInterceptor packetInterceptor,
     @AutoInject IItemBuilderFactory builderFactory
   ) throws Exception {
-    super(plugin, logger, reflection, slotCommunicator, packetInterceptor, builderFactory);
+    super(plugin, logger, reflection, packetInterceptor, builderFactory);
     this.inputs = new HashMap<>();
   }
 
