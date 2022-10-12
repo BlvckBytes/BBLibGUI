@@ -37,7 +37,8 @@ public class InventoryManipulationEvent extends Event {
 
   // Origin has always been taken from and target inventory is where the items are taken to
   // If an action only affects one slot, origin will be equal to target
-  private final Inventory originInventory, targetInventory, clickedInventory;
+  private final Inventory originInventory, targetInventory;
+  private final @Nullable Inventory clickedInventory;
 
   private final Player player;
   private final ManipulationAction action;
@@ -55,7 +56,7 @@ public class InventoryManipulationEvent extends Event {
   public InventoryManipulationEvent(
     Inventory originInventory,
     Inventory targetInventory,
-    Inventory clickedInventory,
+    @Nullable Inventory clickedInventory,
     Player player,
     ManipulationAction action,
     int originSlot,
@@ -158,7 +159,7 @@ public class InventoryManipulationEvent extends Event {
       "  action=" + action + "\n" +
       "  originInventoryHolder=" + originInventory.getHolder() + "\n" +
       "  targetInventoryHolder=" + targetInventory.getHolder() + "\n" +
-      "  clickedInventoryHolder=" + clickedInventory.getHolder() + "\n" +
+      "  clickedInventoryHolder=" + (clickedInventory == null ? null : clickedInventory.getHolder()) + "\n" +
       "  sequence=" + sequenceId + "/" + sequenceTotal + "\n" +
       ")"
     );

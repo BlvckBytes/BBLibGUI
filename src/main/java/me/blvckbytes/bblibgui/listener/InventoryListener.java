@@ -157,7 +157,7 @@ public class InventoryListener implements Listener {
       if (targetSlots.size() == 0)
         return;
 
-      if (targetSlots.stream().anyMatch(slot -> checkCancellation(from, to, e.getClickedInventory(), p, ManipulationAction.MOVE, clickedSlot, clickedSlot, slot, e.getClick())))
+      if (targetSlots.stream().anyMatch(slot -> checkCancellation(from, to, e.getClickedInventory(), p, ManipulationAction.MOVE, clickedSlot, slot, clickedSlot, e.getClick())))
         e.setCancelled(true);
 
       return;
