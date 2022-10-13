@@ -161,6 +161,8 @@ public class InventoryManipulationEvent extends Event {
       "  targetInventoryHolder=" + targetInventory.getHolder() + "\n" +
       "  clickedInventoryHolder=" + (clickedInventory == null ? null : clickedInventory.getHolder()) + "\n" +
       "  sequence=" + sequenceId + "/" + sequenceTotal + "\n" +
+      "  isTakeOut=" + isTakeOut() + "\n" +
+      "  horbarKey=" + getHotbarKey().orElse(null) + "\n" +
       ")"
     );
   }

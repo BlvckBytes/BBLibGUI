@@ -157,6 +157,8 @@ public class InventoryListener implements Listener {
       if (targetSlots.size() == 0)
         return;
 
+      // TODO: Implement an ignore mode for each of the target slot's checks
+
       if (targetSlots.stream().anyMatch(slot -> checkCancellation(from, to, e.getClickedInventory(), p, ManipulationAction.MOVE, clickedSlot, slot, clickedSlot, e.getClick())))
         e.setCancelled(true);
 
@@ -328,7 +330,6 @@ public class InventoryListener implements Listener {
           ItemStack cursor = p.getItemOnCursor();
           cursor.setAmount(cursor.getAmount() - ignoreSubtract);
           p.setItemOnCursor(cursor);
-          System.out.println("cursor -" + ignoreSubtract);
         });
       }
 
