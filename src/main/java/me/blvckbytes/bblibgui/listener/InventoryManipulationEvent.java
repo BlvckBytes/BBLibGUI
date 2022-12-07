@@ -46,12 +46,8 @@ public class InventoryManipulationEvent extends Event {
   private final ClickType click;
   private final int sequenceId, sequenceTotal;
 
-  // If the cancellation is set to null it also results in the
-  // same forbidding mode like true would, but the implementation
-  // can - if supported - try to ignore this event if it's part of
-  // a batch by undoing it's effect internally.
   @Setter
-  private @Nullable Boolean cancelled;
+  private boolean cancelled;
 
   public InventoryManipulationEvent(
     Inventory originInventory,
@@ -127,18 +123,6 @@ public class InventoryManipulationEvent extends Event {
     return sequenceId == sequenceTotal;
   }
 
-  /**
-   * Checks whether this action was taking items out of the inventory
-   */
-  public boolean isTakeOut() {
-    return (
-      action == ManipulationAction.PICKUP ||
-      action == ManipulationAction.DROP ||
-      // Moved into the player's inventory
-      (action == ManipulationAction.MOVE && targetInventory.equals(player.getInventory()))
-    );
-  }
-
   @Override
   public HandlerList getHandlers() {
     return HANDLERS;
@@ -161,7 +145,6 @@ public class InventoryManipulationEvent extends Event {
       "  targetInventoryHolder=" + targetInventory.getHolder() + "\n" +
       "  clickedInventoryHolder=" + (clickedInventory == null ? null : clickedInventory.getHolder()) + "\n" +
       "  sequence=" + sequenceId + "/" + sequenceTotal + "\n" +
-      "  isTakeOut=" + isTakeOut() + "\n" +
       "  horbarKey=" + getHotbarKey().orElse(null) + "\n" +
       ")"
     );
